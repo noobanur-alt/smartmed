@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartMed – Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      display: flex;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: #1a73e8;
+      min-height: 100vh;
+      padding: 24px 0;
+      position: fixed;
+      top: 0; left: 0;
+    }
+
+    .sidebar-logo {
+      color: white;
+      font-size: 22px;
+      font-weight: 700;
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .sidebar-logo span {
+      font-size: 11px;
+      display: block;
+      font-weight: 400;
+      opacity: 0.75;
+      margin-top: 3px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 24px;
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255,255,255,0.15);
+      color: white;
+    }
+
+    .nav-icon { font-size: 18px; }
+
+    .nav-section {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      padding: 18px 24px 6px;
+    }
+
+    /* ── Main content ── */
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .topbar h2 {
+      font-size: 22px;
+      color: #1e293b;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-badge {
+      font-size: 13px;
+      color: #64748b;
+      background: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      background: #1a73e8;
+      border-radius: 50%;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Stat cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .stat-card.green .stat-value { color: #16a34a; }
+    .stat-card.red .stat-value   { color: #dc2626; }
+    .stat-card.blue .stat-value  { color: #1a73e8; }
+
+    /* ── Two column layout ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-title a {
+      font-size: 12px;
+      color: #1a73e8;
+      text-decoration: none;
+      font-weight: 400;
+    }
+
+    /* ── Schedule table ── */
+    .schedule-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+    }
+
+    .schedule-row:last-child { border-bottom: none; }
+
+    .med-name { font-weight: 500; color: #1e293b; }
+    .med-time { color: #64748b; }
+
+    .pill-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .pill-taken    { background: #dcfce7; color: #16a34a; }
+    .pill-pending  { background: #fef9c3; color: #ca8a04; }
+    .pill-missed   { background: #fee2e2; color: #dc2626; }
+
+    /* ── Alert list ── */
+    .alert-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+    }
+
+    .alert-item:last-child { border-bottom: none; }
+
+    .alert-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .dot-red    { background: #dc2626; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green  { background: #16a34a; }
+
+    .alert-text { color: #475569; line-height: 1.5; }
+    .alert-time { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    /* ── Device status ── */
+    .device-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+    }
+
+    .device-row:last-child { border-bottom: none; }
+
+    .device-name { font-weight: 500; color: #1e293b; }
+    .device-loc  { font-size: 12px; color: #94a3b8; }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    .online  { background: #16a34a; }
+    .offline { background: #dc2626; }
+
+    .status-text { font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      SmartMed
+      <span>Medicine Monitoring</span>
+    </div>
+
+    <div class="nav-section">Main</div>
+    <a class="nav-item active" href="dashboard.html">
+      <span class="nav-icon">🏠</span> Dashboard
+    </a>
+    <a class="nav-item" href="patients.html">
+      <span class="nav-icon">👤</span> Patients
+    </a>
+    <a class="nav-item" href="schedule.html">
+      <span class="nav-icon">📅</span> Schedule
+    </a>
+    <a class="nav-item" href="prescription.html">
+      <span class="nav-icon">📄</span> Prescriptions
+    </a>
+
+    <div class="nav-section">Monitor</div>
+    <a class="nav-item" href="history.html">
+      <span class="nav-icon">📋</span> Dose History
+    </a>
+    <a class="nav-item" href="alerts.html">
+      <span class="nav-icon">🔔</span> Alerts
+    </a>
+    <a class="nav-item" href="device.html">
+      <span class="nav-icon">📦</span> Device Status
+    </a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <h2>Good morning, Dr. Sharma 👋</h2>
+      <div class="topbar-right">
+        <div class="date-badge" id="dateDisplay"></div>
+        <div class="avatar">DS</div>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">Total Patients</div>
+        <div class="stat-value">12</div>
+        <div class="stat-sub">3 added this week</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Doses Taken Today</div>
+        <div class="stat-value">18</div>
+        <div class="stat-sub">out of 24 scheduled</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Missed Doses</div>
+        <div class="stat-value">3</div>
+        <div class="stat-sub">alerts sent</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Compliance Rate</div>
+        <div class="stat-value">75%</div>
+        <div class="stat-sub">this week</div>
+      </div>
+    </div>
+
+    <!-- Two column panels -->
+    <div class="two-col">
+
+      <!-- Today's schedule -->
+      <div class="panel">
+        <div class="panel-title">
+          Today's Schedule
+          <a href="schedule.html">View all</a>
+        </div>
+
+        <div class="schedule-row">
+          <div>
+            <div class="med-name">Paracetamol 500mg</div>
+            <div class="med-time">Ravi Kumar &nbsp;·&nbsp; 8:00 AM</div>
+          </div>
+          <span class="pill-badge pill-taken">Taken</span>
+        </div>
+
+        <div class="schedule-row">
+          <div>
+            <div class="med-name">Metformin 1000mg</div>
+            <div class="med-time">Sunita Devi &nbsp;·&nbsp; 9:00 AM</div>
+          </div>
+          <span class="pill-badge pill-taken">Taken</span>
+        </div>
+
+        <div class="schedule-row">
+          <div>
+            <div class="med-name">Amlodipine 5mg</div>
+            <div class="med-time">Ramesh Gupta &nbsp;·&nbsp; 2:00 PM</div>
+          </div>
+          <span class="pill-badge pill-pending">Pending</span>
+        </div>
+
+        <div class="schedule-row">
+          <div>
+            <div class="med-name">Atorvastatin 20mg</div>
+            <div class="med-time">Priya Singh &nbsp;·&nbsp; 9:00 PM</div>
+          </div>
+          <span class="pill-badge pill-pending">Pending</span>
+        </div>
+
+        <div class="schedule-row">
+          <div>
+            <div class="med-name">Aspirin 75mg</div>
+            <div class="med-time">Mohan Lal &nbsp;·&nbsp; 8:00 AM</div>
+          </div>
+          <span class="pill-badge pill-missed">Missed</span>
+        </div>
+      </div>
+
+      <!-- Alerts panel -->
+      <div class="panel">
+        <div class="panel-title">
+          Recent Alerts
+          <a href="alerts.html">View all</a>
+        </div>
+
+        <div class="alert-item">
+          <div class="alert-dot dot-red"></div>
+          <div>
+            <div class="alert-text">Mohan Lal missed morning dose of Aspirin 75mg</div>
+            <div class="alert-time">Today, 8:15 AM</div>
+          </div>
+        </div>
+
+        <div class="alert-item">
+          <div class="alert-dot dot-yellow"></div>
+          <div>
+            <div class="alert-text">SmartMed Box #2 battery low — charge soon</div>
+            <div class="alert-time">Today, 7:50 AM</div>
+          </div>
+        </div>
+
+        <div class="alert-item">
+          <div class="alert-dot dot-green"></div>
+          <div>
+            <div class="alert-text">Sunita Devi took Metformin on time</div>
+            <div class="alert-time">Today, 9:03 AM</div>
+          </div>
+        </div>
+
+        <div class="alert-item">
+          <div class="alert-dot dot-red"></div>
+          <div>
+            <div class="alert-text">Box #3 offline — check WiFi connection</div>
+            <div class="alert-time">Yesterday, 11:30 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Device status -->
+      <div class="panel">
+        <div class="panel-title">Device Status</div>
+
+        <div class="device-row">
+          <div>
+            <div class="device-name">SmartMed Box #1</div>
+            <div class="device-loc">Ward A – Bed 3</div>
+          </div>
+          <div class="status-text">
+            <span class="status-dot online"></span>Online
+          </div>
+        </div>
+
+        <div class="device-row">
+          <div>
+            <div class="device-name">SmartMed Box #2</div>
+            <div class="device-loc">Ward A – Bed 7</div>
+          </div>
+          <div class="status-text">
+            <span class="status-dot online"></span>Online
+          </div>
+        </div>
+
+        <div class="device-row">
+          <div>
+            <div class="device-name">SmartMed Box #3</div>
+            <div class="device-loc">Ward B – Bed 2</div>
+          </div>
+          <div class="status-text">
+            <span class="status-dot offline"></span>Offline
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="panel">
+        <div class="panel-title">Quick Actions</div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+
+          <button onclick="window.location='patients.html'"
+            style="padding:12px;background:#1a73e8;color:white;border:none;
+            border-radius:8px;font-size:14px;cursor:pointer;text-align:left;">
+            ➕ &nbsp; Add New Patient
+          </button>
+
+          <button onclick="window.location='prescription.html'"
+            style="padding:12px;background:#f0f4f8;color:#1e293b;border:1px solid #e2e8f0;
+            border-radius:8px;font-size:14px;cursor:pointer;text-align:left;">
+            📄 &nbsp; Scan Prescription
+          </button>
+
+          <button onclick="window.location='schedule.html'"
+            style="padding:12px;background:#f0f4f8;color:#1e293b;border:1px solid #e2e8f0;
+            border-radius:8px;font-size:14px;cursor:pointer;text-align:left;">
+            📅 &nbsp; Add Medicine Schedule
+          </button>
+
+          <button onclick="window.location='history.html'"
+            style="padding:12px;background:#f0f4f8;color:#1e293b;border:1px solid #e2e8f0;
+            border-radius:8px;font-size:14px;cursor:pointer;text-align:left;">
+            📋 &nbsp; View Dose History
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Show today's date in the topbar
+    const d = new Date();
+    const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+    document.getElementById('dateDisplay').textContent = d.toLocaleDateString('en-IN', options);
+  </script>
+
+</body>
+</html>
