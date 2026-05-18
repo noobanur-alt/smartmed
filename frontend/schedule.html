@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartMed – My Schedule</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      display: flex;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px; background: #1a73e8;
+      min-height: 100vh; padding: 24px 0;
+      position: fixed; top: 0; left: 0;
+    }
+    .sidebar-logo {
+      color: white; font-size: 22px; font-weight: 700;
+      padding: 0 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .sidebar-logo span {
+      font-size: 11px; display: block;
+      font-weight: 400; opacity: 0.75; margin-top: 3px;
+    }
+    .sidebar-user {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 8px;
+    }
+    .user-avatar {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.25); border-radius: 50%;
+      color: white; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 8px;
+    }
+    .user-name { color: white; font-size: 14px; font-weight: 600; }
+    .user-age  { color: rgba(255,255,255,0.65); font-size: 11px; margin-top: 2px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px; color: rgba(255,255,255,0.8);
+      font-size: 14px; cursor: pointer;
+      transition: background 0.15s; text-decoration: none;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255,255,255,0.15); color: white;
+    }
+    .nav-section {
+      font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(255,255,255,0.4);
+      padding: 14px 24px 4px;
+    }
+
+    /* ── Main ── */
+    .main { margin-left: 220px; flex: 1; padding: 28px; }
+
+    .topbar {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 24px;
+    }
+    .topbar h2 { font-size: 22px; color: #1e293b; }
+    .topbar p  { font-size: 13px; color: #64748b; margin-top: 3px; }
+
+    .add-btn {
+      background: #1a73e8; color: white; border: none;
+      padding: 10px 20px; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .add-btn:hover { background: #1558b0; }
+
+    /* ── Week navigator ── */
+    .week-nav {
+      background: white; border: 1px solid #e2e8f0;
+      border-radius: 12px; padding: 16px 20px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .week-arrow {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid #e2e8f0; background: #f8fafc;
+      cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .week-arrow:hover { background: #e9f0fb; }
+
+    .week-days { display: flex; gap: 8px; }
+
+    .day-btn {
+      width: 52px; padding: 8px 4px;
+      text-align: center; border-radius: 10px;
+      border: 1px solid #e2e8f0; cursor: pointer;
+      transition: all 0.15s; background: white;
+    }
+    .day-btn:hover { border-color: #1a73e8; }
+    .day-btn.active {
+      background: #1a73e8; border-color: #1a73e8; color: white;
+    }
+    .day-name {
+      font-size: 11px; color: #94a3b8; margin-bottom: 4px;
+    }
+    .day-btn.active .day-name { color: rgba(255,255,255,0.8); }
+    .day-num {
+      font-size: 16px; font-weight: 700; color: #1e293b;
+    }
+    .day-btn.active .day-num { color: white; }
+    .day-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #1a73e8; margin: 4px auto 0;
+    }
+    .day-btn.active .day-dot { background: white; }
+    .day-btn.no-meds .day-dot { display: none; }
+
+    /* ── Timeline ── */
+    .timeline { position: relative; padding-left: 80px; }
+
+    .time-slot {
+      position: relative;
+      margin-bottom: 6px;
+      min-height: 60px;
+    }
+
+    .time-label {
+      position: absolute;
+      left: -80px;
+      top: 14px;
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 500;
+      width: 70px;
+      text-align: right;
+    }
+
+    .time-line {
+      position: absolute;
+      left: -10px;
+      top: 22px;
+      width: 100%;
+      height: 1px;
+      background: #f1f5f9;
+      z-index: 0;
+    }
+
+    .time-dot {
+      position: absolute;
+      left: -14px;
+      top: 18px;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      border: 2px solid white;
+      z-index: 1;
+    }
+
+    .time-dot.has-med { background: #1a73e8; }
+
+    .slot-cards {
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 4px 0;
+    }
+
+    .schedule-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+      transition: box-shadow 0.15s;
+    }
+    .schedule-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+    .schedule-card.taken  { border-left: 3px solid #16a34a; }
+    .schedule-card.pending{ border-left: 3px solid #f59e0b; }
+    .schedule-card.missed { border-left: 3px solid #dc2626; }
+
+    .sc-left { display: flex; align-items: center; gap: 12px; }
+
+    .sc-icon {
+      width: 38px; height: 38px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .icon-blue   { background: #eff6ff; }
+    .icon-green  { background: #f0fdf4; }
+    .icon-amber  { background: #fffbeb; }
+    .icon-purple { background: #faf5ff; }
+
+    .sc-name { font-size: 14px; font-weight: 600; color: #1e293b; }
+    .sc-sub  { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+    .sc-right { display: flex; align-items: center; gap: 10px; }
+
+    .status-pill {
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .pill-taken   { background: #dcfce7; color: #16a34a; }
+    .pill-pending { background: #fef9c3; color: #ca8a04; }
+    .pill-missed  { background: #fee2e2; color: #dc2626; }
+
+    .mark-btn {
+      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      background: white;
+      color: #475569;
+      transition: all 0.15s;
+    }
+    .mark-btn:hover {
+      background: #dcfce7; border-color: #16a34a; color: #16a34a;
+    }
+
+    /* ── Summary strip ── */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .summary-icon {
+      font-size: 22px;
+    }
+
+    .summary-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .summary-label {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 1px;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4); z-index: 100;
+      justify-content: center; align-items: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 14px;
+      padding: 28px; width: 440px;
+    }
+    .modal-title {
+      font-size: 18px; font-weight: 700; color: #1e293b;
+      margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: #475569; margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: 14px; color: #1e293b; outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: #1a73e8; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-cancel {
+      flex: 1; padding: 11px;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      background: #f8fafc; font-size: 14px; cursor: pointer; color: #64748b;
+    }
+    .btn-save {
+      flex: 2; padding: 11px; border: none; border-radius: 8px;
+      background: #1a73e8; color: white;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .btn-save:hover { background: #1558b0; }
+
+    /* ── Empty ── */
+    .empty-day {
+      text-align: center; padding: 48px;
+      color: #94a3b8;
+    }
+    .empty-day div { font-size: 40px; margin-bottom: 10px; }
+    .empty-day p   { font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">SmartMed <span>My Medicine Manager</span></div>
+    <div class="sidebar-user">
+      <div class="user-avatar">AS</div>
+      <div class="user-name">Anurag Sharma</div>
+      <div class="user-age">Age 22 &nbsp;·&nbsp; Patient ID: SM-001</div>
+    </div>
+    <div class="nav-section">My Health</div>
+    <a class="nav-item" href="dashboard.html">🏠 &nbsp; Dashboard</a>
+    <a class="nav-item" href="medicines.html">💊 &nbsp; My Medicines</a>
+    <a class="nav-item active" href="schedule.html">📅 &nbsp; My Schedule</a>
+    <a class="nav-item" href="prescription.html">📄 &nbsp; Scan Prescription</a>
+    <div class="nav-section">History</div>
+    <a class="nav-item" href="history.html">📋 &nbsp; Dose History</a>
+    <a class="nav-item" href="reports.html">📊 &nbsp; My Reports</a>
+    <div class="nav-section">Device</div>
+    <a class="nav-item" href="device.html">📦 &nbsp; My SmartMed Box</a>
+    <a class="nav-item" href="settings.html">⚙️ &nbsp; Settings</a>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <div class="topbar">
+      <div>
+        <h2>📅 My Schedule</h2>
+        <p>Track every dose — tap "Mark Taken" when you take a medicine.</p>
+      </div>
+      <button class="add-btn" onclick="openModal()">+ Add Dose</button>
+    </div>
+
+    <!-- Summary strip -->
+    <div class="summary-strip">
+      <div class="summary-card">
+        <div class="summary-icon">💊</div>
+        <div>
+          <div class="summary-val" id="totalToday">4</div>
+          <div class="summary-label">Total today</div>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">✅</div>
+        <div>
+          <div class="summary-val" id="takenToday" style="color:#16a34a">2</div>
+          <div class="summary-label">Taken</div>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">⏳</div>
+        <div>
+          <div class="summary-val" id="pendingToday" style="color:#d97706">2</div>
+          <div class="summary-label">Pending</div>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">📈</div>
+        <div>
+          <div class="summary-val" id="pctToday" style="color:#1a73e8">50%</div>
+          <div class="summary-label">Done today</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Week navigator -->
+    <div class="week-nav">
+      <div class="week-arrow" onclick="shiftWeek(-1)">‹</div>
+      <div class="week-days" id="weekDays"></div>
+      <div class="week-arrow" onclick="shiftWeek(1)">›</div>
+    </div>
+
+    <!-- Timeline -->
+    <div style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:24px">
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+  </div>
+
+  <!-- Add Dose Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-title">
+        Add Dose to Schedule
+        <button class="close-btn" onclick="closeModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Medicine Name</label>
+        <input type="text" id="mName" placeholder="e.g. Paracetamol 500mg">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Time</label>
+          <input type="time" id="mTime" value="08:00">
+        </div>
+        <div class="form-group">
+          <label>Quantity</label>
+          <input type="text" id="mQty" placeholder="e.g. 1 tablet">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Instructions</label>
+          <select id="mFood">
+            <option>After meal</option>
+            <option>Before meal</option>
+            <option>Empty stomach</option>
+            <option>With water</option>
+            <option>With milk</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Repeat</label>
+          <select id="mRepeat">
+            <option>Daily</option>
+            <option>Once</option>
+            <option>Weekdays only</option>
+            <option>Weekends only</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="addDose()">📅 Add to Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Data ──
+    const baseSchedule = [
+      { time: '08:00', name: 'Paracetamol 500mg', qty: '1 tablet', food: 'After breakfast', icon: '💊', color: 'icon-blue',   status: 'taken'   },
+      { time: '10:00', name: 'Vitamin D3 60K',    qty: '1 capsule',food: 'With milk',       icon: '💉', color: 'icon-green',  status: 'taken'   },
+      { time: '14:00', name: 'Amlodipine 5mg',    qty: '1 tablet', food: 'After lunch',     icon: '🌿', color: 'icon-amber',  status: 'pending' },
+      { time: '21:00', name: 'Pantoprazole 40mg', qty: '1 tablet', food: 'Before dinner',   icon: '🔬', color: 'icon-purple', status: 'pending' },
+    ];
+
+    let weekOffset = 0;
+    let selectedDay = new Date();
+    let schedule = JSON.parse(JSON.stringify(baseSchedule));
+
+    // ── Week builder ──
+    function buildWeek() {
+      const container = document.getElementById('weekDays');
+      container.innerHTML = '';
+      const today = new Date();
+      const days  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - today.getDay() + i + weekOffset * 7);
+
+        const btn = document.createElement('div');
+        btn.className = 'day-btn' +
+          (d.toDateString() === selectedDay.toDateString() ? ' active' : '');
+
+        const isToday = d.toDateString() === today.toDateString();
+        btn.innerHTML = `
+          <div class="day-name">${days[d.getDay()]}</div>
+          <div class="day-num">${d.getDate()}</div>
+          <div class="day-dot"></div>`;
+
+        btn.onclick = () => {
+          selectedDay = d;
+          buildWeek();
+          renderTimeline();
+        };
+        container.appendChild(btn);
+      }
+    }
+
+    function shiftWeek(dir) {
+      weekOffset += dir;
+      buildWeek();
+    }
+
+    // ── Timeline ──
+    function renderTimeline() {
+      const container = document.getElementById('timeline');
+      container.innerHTML = '';
+
+      const isToday = selectedDay.toDateString() === new Date().toDateString();
+      const now = new Date();
+
+      if (schedule.length === 0) {
+        container.innerHTML = `<div class="empty-day">
+          <div>📭</div><p>No medicines scheduled for this day.</p></div>`;
+        return;
+      }
+
+      // Group by time
+      const grouped = {};
+      schedule.forEach(med => {
+        if (!grouped[med.time]) grouped[med.time] = [];
+        grouped[med.time].push(med);
+      });
+
+      Object.keys(grouped).sort().forEach(time => {
+        const slot = document.createElement('div');
+        slot.className = 'time-slot';
+
+        const [h, m]  = time.split(':').map(Number);
+        const label12 = `${h === 0 ? 12 : h > 12 ? h-12 : h}:${String(m).padStart(2,'0')} ${h < 12 ? 'AM' : 'PM'}`;
+
+        // Determine status for past times on today
+        let slotStatus = 'pending';
+        if (isToday) {
+          const slotDate = new Date(); slotDate.setHours(h, m, 0);
+          if (now > slotDate) slotStatus = 'auto-past';
+        }
+
+        const hasMed = grouped[time].some(x => x.status === 'taken' || x.status === 'pending' || x.status === 'missed');
+
+        slot.innerHTML = `
+          <div class="time-label">${label12}</div>
+          <div class="time-line"></div>
+          <div class="time-dot ${hasMed ? 'has-med' : ''}"></div>
+          <div class="slot-cards" id="slot-${time.replace(':','')}"></div>`;
+
+        container.appendChild(slot);
+
+        const cardsDiv = slot.querySelector(`#slot-${time.replace(':','')}`);
+        grouped[time].forEach((med, idx) => {
+          cardsDiv.appendChild(makeCard(med, time, idx));
+        });
+      });
+
+      updateSummary();
+    }
+
+    function makeCard(med, time, idx) {
+      const div = document.createElement('div');
+      div.className = `schedule-card ${med.status}`;
+
+      const pillClass = med.status === 'taken'   ? 'pill-taken'
+                      : med.status === 'missed'  ? 'pill-missed'
+                      : 'pill-pending';
+      const pillText  = med.status === 'taken'   ? '✓ Taken'
+                      : med.status === 'missed'  ? '✗ Missed'
+                      : '⏳ Pending';
+
+      div.innerHTML = `
+        <div class="sc-left">
+          <div class="sc-icon ${med.color}">${med.icon}</div>
+          <div>
+            <div class="sc-name">${med.name}</div>
+            <div class="sc-sub">${med.qty} &nbsp;·&nbsp; ${med.food}</div>
+          </div>
+        </div>
+        <div class="sc-right">
+          <span class="status-pill ${pillClass}">${pillText}</span>
+          ${med.status !== 'taken' ? `<button class="mark-btn"
+            onclick="markTaken('${time}', ${idx})">Mark Taken</button>` : ''}
+        </div>`;
+      return div;
+    }
+
+    function markTaken(time, idx) {
+      const grouped = {};
+      schedule.forEach((med, i) => {
+        if (!grouped[med.time]) grouped[med.time] = [];
+        grouped[med.time].push({ med, i });
+      });
+      const entry = grouped[time][idx];
+      if (entry) schedule[entry.i].status = 'taken';
+      renderTimeline();
+    }
+
+    function updateSummary() {
+      const total   = schedule.length;
+      const taken   = schedule.filter(m => m.status === 'taken').length;
+      const pending = schedule.filter(m => m.status === 'pending').length;
+      const pct     = total ? Math.round(taken / total * 100) : 0;
+      document.getElementById('totalToday').textContent   = total;
+      document.getElementById('takenToday').textContent   = taken;
+      document.getElementById('pendingToday').textContent = pending;
+      document.getElementById('pctToday').textContent     = pct + '%';
+    }
+
+    // ── Add dose ──
+    function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+    function addDose() {
+      const name = document.getElementById('mName').value.trim();
+      if (!name) { alert('Please enter a medicine name.'); return; }
+
+      const icons  = ['💊','🌿','💉','🔬','🧪'];
+      const colors = ['icon-blue','icon-green','icon-amber','icon-purple'];
+      const r      = Math.floor(Math.random() * 5);
+
+      schedule.push({
+        time    : document.getElementById('mTime').value,
+        name,
+        qty     : document.getElementById('mQty').value  || '1 tablet',
+        food    : document.getElementById('mFood').value,
+        icon    : icons[r],
+        color   : colors[r % 4],
+        status  : 'pending'
+      });
+
+      closeModal();
+      renderTimeline();
+
+      document.getElementById('mName').value = '';
+      document.getElementById('mQty').value  = '';
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // ── Init ──
+    buildWeek();
+    renderTimeline();
+  </script>
+
+</body>
+</html>
