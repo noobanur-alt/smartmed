@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartMed – My Device</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      display: flex;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px; background: #1a73e8;
+      min-height: 100vh; padding: 24px 0;
+      position: fixed; top: 0; left: 0;
+    }
+    .sidebar-logo {
+      color: white; font-size: 22px; font-weight: 700;
+      padding: 0 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .sidebar-logo span {
+      font-size: 11px; display: block;
+      font-weight: 400; opacity: 0.75; margin-top: 3px;
+    }
+    .sidebar-user {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 8px;
+    }
+    .user-avatar {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.25); border-radius: 50%;
+      color: white; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 8px;
+    }
+    .user-name { color: white; font-size: 14px; font-weight: 600; }
+    .user-age  { color: rgba(255,255,255,0.65); font-size: 11px; margin-top: 2px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px; color: rgba(255,255,255,0.8);
+      font-size: 14px; cursor: pointer;
+      transition: background 0.15s; text-decoration: none;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255,255,255,0.15); color: white;
+    }
+    .nav-section {
+      font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(255,255,255,0.4);
+      padding: 14px 24px 4px;
+    }
+
+    /* ── Main ── */
+    .main { margin-left: 220px; flex: 1; padding: 28px; }
+
+    .topbar { margin-bottom: 24px; }
+    .topbar h2 { font-size: 22px; color: #1e293b; }
+    .topbar p  { font-size: 13px; color: #64748b; margin-top: 3px; }
+
+    /* ── Top grid ── */
+    .top-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Device card ── */
+    .device-card {
+      background: linear-gradient(135deg, #1a73e8, #0f52ba);
+      border-radius: 16px;
+      padding: 28px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .device-card::before {
+      content: '📦';
+      position: absolute;
+      right: 24px; top: 24px;
+      font-size: 56px;
+      opacity: 0.15;
+    }
+
+    .device-card-label {
+      font-size: 11px; opacity: 0.75;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .device-card-name {
+      font-size: 22px; font-weight: 700; margin-bottom: 4px;
+    }
+
+    .device-card-id {
+      font-size: 13px; opacity: 0.75; margin-bottom: 20px;
+    }
+
+    .device-status-row {
+      display: flex; gap: 20px; flex-wrap: wrap;
+    }
+
+    .ds-item { }
+    .ds-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; margin-bottom: 3px; }
+    .ds-value { font-size: 14px; font-weight: 600; }
+
+    .online-dot {
+      display: inline-block; width: 8px; height: 8px;
+      background: #4ade80; border-radius: 50;
+      margin-right: 5px; animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
+
+    /* ── Quick stats ── */
+    .quick-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .qs-card {
+      background: white; border: 1px solid #e2e8f0;
+      border-radius: 12px; padding: 16px 18px;
+    }
+
+    .qs-icon  { font-size: 22px; margin-bottom: 8px; }
+    .qs-val   { font-size: 22px; font-weight: 700; color: #1e293b; }
+    .qs-label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    /* ── Panel ── */
+    .panel {
+      background: white; border: 1px solid #e2e8f0;
+      border-radius: 12px; padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      font-size: 15px; font-weight: 600; color: #1e293b;
+      margin-bottom: 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* ── Controls grid ── */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .control-btn {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px; padding: 18px 14px;
+      text-align: center; cursor: pointer;
+      background: #f8fafc;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      border-color: #1a73e8;
+      background: #eff6ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26,115,232,0.12);
+    }
+
+    .control-btn.danger:hover {
+      border-color: #dc2626;
+      background: #fff1f2;
+    }
+
+    .control-btn.success:hover {
+      border-color: #16a34a;
+      background: #f0fdf4;
+    }
+
+    .ctrl-icon  { font-size: 28px; margin-bottom: 8px; }
+    .ctrl-label { font-size: 13px; font-weight: 600; color: #1e293b; }
+    .ctrl-sub   { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+
+    /* ── Status rows ── */
+    .status-row {
+      display: flex; justify-content: space-between;
+      align-items: center; padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+    }
+    .status-row:last-child { border-bottom: none; }
+    .status-label { color: #475569; }
+    .status-val   { font-weight: 500; color: #1e293b; }
+
+    .dot-green  { color: #16a34a; }
+    .dot-red    { color: #dc2626; }
+    .dot-amber  { color: #d97706; }
+
+    /* ── Battery bar ── */
+    .battery-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .battery-bar {
+      width: 80px; height: 10px;
+      background: #f1f5f9; border-radius: 5px; overflow: hidden;
+    }
+    .battery-fill {
+      height: 100%; border-radius: 5px;
+      transition: width 0.5s;
+    }
+
+    /* ── WiFi strength ── */
+    .wifi-bars {
+      display: flex; align-items: flex-end; gap: 2px; height: 16px;
+    }
+    .wifi-bar {
+      width: 5px; border-radius: 2px; background: #e2e8f0;
+    }
+    .wifi-bar.active { background: #1a73e8; }
+
+    /* ── Activity log ── */
+    .log-item {
+      display: flex; gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f8fafc;
+      font-size: 13px;
+    }
+    .log-item:last-child { border-bottom: none; }
+
+    .log-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0; margin-top: 4px;
+    }
+    .log-green  { background: #16a34a; }
+    .log-blue   { background: #1a73e8; }
+    .log-amber  { background: #f59e0b; }
+    .log-red    { background: #dc2626; }
+
+    .log-text  { color: #475569; line-height: 1.5; flex: 1; }
+    .log-time  { font-size: 11px; color: #94a3b8; flex-shrink: 0; }
+
+    /* ── Two col ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* ── Toast notification ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1e293b; color: white;
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 500;
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.3s; z-index: 999;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── Settings form ── */
+    .setting-row {
+      display: flex; justify-content: space-between;
+      align-items: center; padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9; font-size: 13px;
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { color: #475569; }
+    .setting-label small { display: block; font-size: 11px; color: #94a3b8; margin-top: 1px; }
+
+    .toggle {
+      width: 38px; height: 22px; background: #16a34a;
+      border-radius: 11px; position: relative; cursor: pointer;
+      transition: background 0.2s; flex-shrink: 0;
+    }
+    .toggle.off { background: #cbd5e1; }
+    .toggle-knob {
+      width: 16px; height: 16px; background: white;
+      border-radius: 50%; position: absolute;
+      top: 3px; right: 3px; transition: all 0.2s;
+    }
+    .toggle.off .toggle-knob { right: unset; left: 3px; }
+
+    .mini-input {
+      padding: 6px 10px; border: 1px solid #e2e8f0;
+      border-radius: 6px; font-size: 13px; width: 90px;
+      outline: none; color: #1e293b;
+    }
+    .mini-input:focus { border-color: #1a73e8; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">SmartMed <span>My Medicine Manager</span></div>
+    <div class="sidebar-user">
+      <div class="user-avatar">AS</div>
+      <div class="user-name">Anurag Sharma</div>
+      <div class="user-age">Age 22 &nbsp;·&nbsp; Patient ID: SM-001</div>
+    </div>
+    <div class="nav-section">My Health</div>
+    <a class="nav-item" href="dashboard.html">🏠 &nbsp; Dashboard</a>
+    <a class="nav-item" href="medicines.html">💊 &nbsp; My Medicines</a>
+    <a class="nav-item" href="schedule.html">📅 &nbsp; My Schedule</a>
+    <a class="nav-item" href="prescription.html">📄 &nbsp; Scan Prescription</a>
+    <div class="nav-section">History</div>
+    <a class="nav-item" href="history.html">📋 &nbsp; Dose History</a>
+    <a class="nav-item" href="reports.html">📊 &nbsp; My Reports</a>
+    <div class="nav-section">Device</div>
+    <a class="nav-item active" href="device.html">📦 &nbsp; My SmartMed Box</a>
+    <a class="nav-item" href="settings.html">⚙️ &nbsp; Settings</a>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <div class="topbar">
+      <h2>📦 My SmartMed Box</h2>
+      <p>Monitor and control your medicine box hardware from here.</p>
+    </div>
+
+    <!-- Top grid: device card + quick stats -->
+    <div class="top-grid">
+
+      <!-- Device card -->
+      <div class="device-card">
+        <div class="device-card-label">Your Device</div>
+        <div class="device-card-name">SmartMed Box</div>
+        <div class="device-card-id">ID: SM-BOX-001 &nbsp;·&nbsp; ESP32 WiFi</div>
+        <div class="device-status-row">
+          <div class="ds-item">
+            <div class="ds-label">Status</div>
+            <div class="ds-value">
+              <span class="online-dot" style="border-radius:50%;display:inline-block"></span>
+              Online
+            </div>
+          </div>
+          <div class="ds-item">
+            <div class="ds-label">Last Sync</div>
+            <div class="ds-value" id="lastSync">Just now</div>
+          </div>
+          <div class="ds-item">
+            <div class="ds-label">Lid Status</div>
+            <div class="ds-value" id="lidStatus">🔒 Closed</div>
+          </div>
+          <div class="ds-item">
+            <div class="ds-label">Uptime</div>
+            <div class="ds-value" id="uptime">2h 14m</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="quick-stats">
+        <div class="qs-card">
+          <div class="qs-icon">🔓</div>
+          <div class="qs-val">18</div>
+          <div class="qs-label">Lid openings today</div>
+        </div>
+        <div class="qs-card">
+          <div class="qs-icon">✅</div>
+          <div class="qs-val">2/4</div>
+          <div class="qs-label">Doses taken today</div>
+        </div>
+        <div class="qs-card">
+          <div class="qs-icon">📡</div>
+          <div class="qs-val" style="color:#1a73e8">-62 dBm</div>
+          <div class="qs-label">WiFi signal strength</div>
+        </div>
+        <div class="qs-card">
+          <div class="qs-icon">🔋</div>
+          <div class="qs-val" style="color:#16a34a">78%</div>
+          <div class="qs-label">Battery level</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual controls -->
+    <div class="panel">
+      <div class="panel-title">🎮 Manual Controls
+        <span style="font-size:12px;color:#94a3b8;font-weight:400">
+          Commands sent directly to your ESP32
+        </span>
+      </div>
+      <div class="controls-grid">
+
+        <div class="control-btn success" onclick="sendCommand('open_lid')">
+          <div class="ctrl-icon">🔓</div>
+          <div class="ctrl-label">Open Lid</div>
+          <div class="ctrl-sub">Unlock medicine compartment</div>
+        </div>
+
+        <div class="control-btn danger" onclick="sendCommand('close_lid')">
+          <div class="ctrl-icon">🔒</div>
+          <div class="ctrl-label">Close Lid</div>
+          <div class="ctrl-sub">Lock medicine compartment</div>
+        </div>
+
+        <div class="control-btn" onclick="sendCommand('buzz')">
+          <div class="ctrl-icon">🔔</div>
+          <div class="ctrl-label">Test Buzzer</div>
+          <div class="ctrl-sub">Send a test alarm beep</div>
+        </div>
+
+        <div class="control-btn" onclick="sendCommand('sync')">
+          <div class="ctrl-icon">🔄</div>
+          <div class="ctrl-label">Sync Schedule</div>
+          <div class="ctrl-sub">Push latest schedule to box</div>
+        </div>
+
+        <div class="control-btn" onclick="sendCommand('face_enroll')">
+          <div class="ctrl-icon">🤳</div>
+          <div class="ctrl-label">Enroll Face</div>
+          <div class="ctrl-sub">Register your face for auth</div>
+        </div>
+
+        <div class="control-btn danger" onclick="sendCommand('restart')">
+          <div class="ctrl-icon">⚡</div>
+          <div class="ctrl-label">Restart Box</div>
+          <div class="ctrl-sub">Reboot the ESP32 device</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Two columns -->
+    <div class="two-col">
+
+      <!-- Hardware status -->
+      <div class="panel">
+        <div class="panel-title">🔧 Hardware Status</div>
+
+        <div class="status-row">
+          <div class="status-label">WiFi Connection</div>
+          <div class="status-val dot-green">
+            ● Connected
+            <div class="wifi-bars" style="display:inline-flex;margin-left:8px">
+              <div class="wifi-bar active" style="height:4px"></div>
+              <div class="wifi-bar active" style="height:8px"></div>
+              <div class="wifi-bar active" style="height:12px"></div>
+              <div class="wifi-bar active" style="height:16px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-row">
+          <div class="status-label">IP Address</div>
+          <div class="status-val" style="font-family:monospace">192.168.1.108</div>
+        </div>
+
+        <div class="status-row">
+          <div class="status-label">Battery</div>
+          <div class="status-val">
+            <div class="battery-wrap">
+              <div class="battery-bar">
+                <div class="battery-fill"
+                  style="width:78%;background:#16a34a"></div>
+              </div>
+              <span style="color:#16a34a">78%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-row">
+          <div class="status-label">Lid Servo Motor</div>
+          <div class="status-val dot-green">● Working</div>
+        </div>
+
+        <div class="status-row">
+          <div class="status-label">Pill Sensor</div>
+          <div class="status-val dot-green">● Active</div>
+        </div>
+
+        <div class="status-row">
+          <div class="status-label">Buzzer</div>
+          <div class="status-val dot-green">● Ready</div>
+        </div>
+
+        <div class="status-row">
+          <div class="status-label">Camera (Face Auth)</div>
+          <div class="status-val dot-green">● Ready</div>
+        </div>
+
+        <div class="status-row">
+          <div class="status-label">LCD Display</div>
+          <div class="status-val dot-green">● On</div>
+        </div>
+
+        <div class="status-row">
+          <div class="status-label">Firmware Version</div>
+          <div class="status-val">v1.0.3</div>
+        </div>
+
+      </div>
+
+      <!-- Activity log -->
+      <div class="panel">
+        <div class="panel-title">📜 Activity Log
+          <button onclick="clearLog()"
+            style="font-size:12px;color:#94a3b8;background:none;
+            border:none;cursor:pointer;font-weight:400">Clear</button>
+        </div>
+        <div id="activityLog">
+          <div class="log-item">
+            <div class="log-dot log-green"></div>
+            <div class="log-text">Lid opened — Paracetamol taken</div>
+            <div class="log-time">8:03 AM</div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot log-blue"></div>
+            <div class="log-text">Schedule synced from server</div>
+            <div class="log-time">7:58 AM</div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot log-green"></div>
+            <div class="log-text">Face recognized — Anurag Sharma</div>
+            <div class="log-time">8:02 AM</div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot log-amber"></div>
+            <div class="log-text">Reminder buzzer triggered</div>
+            <div class="log-time">8:00 AM</div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot log-green"></div>
+            <div class="log-text">Device powered on, WiFi connected</div>
+            <div class="log-time">7:46 AM</div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot log-red"></div>
+            <div class="log-text">WiFi disconnected briefly</div>
+            <div class="log-time">Yesterday 11:42 PM</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Box settings -->
+    <div class="panel">
+      <div class="panel-title">⚙️ Box Settings</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 40px">
+
+        <div class="setting-row">
+          <div class="setting-label">
+            Buzzer alarm
+            <small>Sound when it's medicine time</small>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('off')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            Face authentication
+            <small>Require face scan to open lid</small>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('off')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            Auto-close lid
+            <small>Close lid after 30 seconds</small>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('off')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            LCD display
+            <small>Show time and next dose on screen</small>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('off')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            Buzzer volume
+            <small>How loud the alarm beeps</small>
+          </div>
+          <input class="mini-input" type="number"
+            value="3" min="1" max="5"> &nbsp;<span style="font-size:12px;color:#94a3b8">/ 5</span>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            Reminder repeat
+            <small>Buzz every N minutes if not taken</small>
+          </div>
+          <input class="mini-input" type="number"
+            value="5" min="1" max="30"> &nbsp;<span style="font-size:12px;color:#94a3b8">min</span>
+        </div>
+
+      </div>
+
+      <div style="margin-top:16px">
+        <button onclick="saveSettings()"
+          style="background:#1a73e8;color:white;border:none;
+          padding:10px 24px;border-radius:8px;font-size:14px;
+          font-weight:600;cursor:pointer">
+          💾 Save Settings
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span id="toastIcon">✅</span>
+    <span id="toastMsg">Command sent!</span>
+  </div>
+
+  <script>
+    // ── Toast helper ──
+    function showToast(icon, msg, duration = 3000) {
+      document.getElementById('toastIcon').textContent = icon;
+      document.getElementById('toastMsg').textContent  = msg;
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), duration);
+    }
+
+    // ── Command sender ──
+    // In Phase 3 this will be a real fetch() call to your Node.js backend
+    // which then sends the command to ESP32
+    function sendCommand(cmd) {
+      const messages = {
+        open_lid    : ['🔓', 'Lid open command sent to box!'],
+        close_lid   : ['🔒', 'Lid close command sent to box!'],
+        buzz        : ['🔔', 'Test buzzer triggered!'],
+        sync        : ['🔄', 'Schedule synced to box!'],
+        face_enroll : ['🤳', 'Face enrollment started on box!'],
+        restart     : ['⚡', 'Restart command sent to box!'],
+      };
+
+      const [icon, msg] = messages[cmd] || ['📡', 'Command sent!'];
+      showToast(icon, msg);
+      addLog(icon, msg);
+
+      // ── THIS IS WHERE REAL API CALL GOES IN PHASE 3 ──
+      // fetch('http://your-backend/api/device/command', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ command: cmd })
+      // })
+
+      // Update lid status display
+      if (cmd === 'open_lid') {
+        document.getElementById('lidStatus').textContent = '🔓 Open';
+      } else if (cmd === 'close_lid') {
+        document.getElementById('lidStatus').textContent = '🔒 Closed';
+      }
+    }
+
+    // ── Add to activity log ──
+    function addLog(icon, text) {
+      const log  = document.getElementById('activityLog');
+      const now  = new Date();
+      const time = now.toLocaleTimeString('en-IN',
+        { hour:'2-digit', minute:'2-digit' });
+
+      const colorMap = {
+        '🔓':'log-green','🔒':'log-red','🔔':'log-amber',
+        '🔄':'log-blue', '🤳':'log-blue','⚡':'log-amber','💾':'log-blue'
+      };
+
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = `
+        <div class="log-dot ${colorMap[icon] || 'log-blue'}"></div>
+        <div class="log-text">${text}</div>
+        <div class="log-time">${time}</div>`;
+
+      log.insertBefore(item, log.firstChild);
+    }
+
+    function clearLog() {
+      document.getElementById('activityLog').innerHTML =
+        `<div style="text-align:center;padding:24px;
+          color:#94a3b8;font-size:13px">No activity yet.</div>`;
+    }
+
+    function saveSettings() {
+      showToast('💾', 'Settings saved and sent to box!');
+      addLog('💾', 'Box settings updated');
+    }
+
+    // ── Live uptime counter ──
+    let uptimeSeconds = 8040;
+    setInterval(() => {
+      uptimeSeconds++;
+      const h = Math.floor(uptimeSeconds / 3600);
+      const m = Math.floor((uptimeSeconds % 3600) / 60);
+      document.getElementById('uptime').textContent = `${h}h ${m}m`;
+    }, 1000);
+
+    // ── Live sync time ──
+    let syncSeconds = 0;
+    setInterval(() => {
+      syncSeconds++;
+      const txt = syncSeconds < 60
+        ? `${syncSeconds}s ago`
+        : `${Math.floor(syncSeconds/60)}m ago`;
+      document.getElementById('lastSync').textContent = txt;
+    }, 1000);
+  </script>
+
+</body>
+</html>
