@@ -441,19 +441,33 @@
   </div>
 
   <script>
-    // ── Data ──
-    const baseSchedule = [
-      { time: '08:00', name: 'Paracetamol 500mg', qty: '1 tablet', food: 'After breakfast', icon: '💊', color: 'icon-blue',   status: 'taken'   },
-      { time: '10:00', name: 'Vitamin D3 60K',    qty: '1 capsule',food: 'With milk',       icon: '💉', color: 'icon-green',  status: 'taken'   },
-      { time: '14:00', name: 'Amlodipine 5mg',    qty: '1 tablet', food: 'After lunch',     icon: '🌿', color: 'icon-amber',  status: 'pending' },
-      { time: '21:00', name: 'Pantoprazole 40mg', qty: '1 tablet', food: 'Before dinner',   icon: '🔬', color: 'icon-purple', status: 'pending' },
-    ];
+    const token = localStorage.getItem('smartmed_token');
+    const user  = JSON.parse(localStorage.getItem('smartmed_user') || '{}');
+    if (!token) window.location = 'index.html';
 
-    let weekOffset = 0;
+    document.querySelector('.user-name').textContent = user.name || 'User';
+    document.querySelector('.user-avatar').textContent =
+      (user.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase();
+
+    // ── API helper ──
+    async function api(endpoint, method = 'GET', body = null) {
+      const options = {
+        method,
+        headers: {
+          'Content-Type'  : 'application/json',
+          'Authorization' : `Bearer ${token}`
+        }
+      };
+      if (body) options.body = JSON.stringify(body);
+      const res = await fetch(`http://localhost:5000${endpoint}`, options);
+      return res.json();
+    }
+
+    let weekOffset  = 0;
     let selectedDay = new Date();
-    let schedule = JSON.parse(JSON.stringify(baseSchedule));
+    let todayData   = [];
 
-    // ── Week builder ──
+    // ── Build week navigator ──
     function buildWeek() {
       const container = document.getElementById('weekDays');
       container.innerHTML = '';
@@ -468,16 +482,15 @@
         btn.className = 'day-btn' +
           (d.toDateString() === selectedDay.toDateString() ? ' active' : '');
 
-        const isToday = d.toDateString() === today.toDateString();
         btn.innerHTML = `
           <div class="day-name">${days[d.getDay()]}</div>
           <div class="day-num">${d.getDate()}</div>
           <div class="day-dot"></div>`;
 
         btn.onclick = () => {
-          selectedDay = d;
+          selectedDay = new Date(d);
           buildWeek();
-          renderTimeline();
+          loadSchedule();
         };
         container.appendChild(btn);
       }
@@ -488,25 +501,67 @@
       buildWeek();
     }
 
-    // ── Timeline ──
-    function renderTimeline() {
+    // ── Load today's schedule from backend ──
+    async function loadSchedule() {
+      const container = document.getElementById('timeline');
+      container.innerHTML = `<div style="text-align:center;
+        padding:32px;color:#94a3b8">Loading schedule...</div>`;
+
+      try {
+        const isToday = selectedDay.toDateString() === new Date().toDateString();
+
+        if (isToday) {
+          // Load real data from backend for today
+          const data = await api('/api/schedule/today');
+
+          if (!data.success) {
+            container.innerHTML = `<div style="text-align:center;
+              padding:32px;color:#dc2626">Failed to load schedule.</div>`;
+            return;
+          }
+
+          todayData = data.schedule;
+          updateSummary(data.total, data.taken, data.pending);
+          renderTimeline(data.schedule, true);
+
+        } else {
+          // For past/future days show empty or simulated
+          container.innerHTML = `<div style="text-align:center;
+            padding:48px;color:#94a3b8">
+            <div style="font-size:36px;margin-bottom:10px">📅</div>
+            <p style="font-size:14px">Schedule history coming soon.</p>
+            <p style="font-size:12px;margin-top:6px">
+              Select today to see your current schedule.</p>
+          </div>`;
+          updateSummary(0, 0, 0);
+        }
+
+      } catch (err) {
+        container.innerHTML = `<div style="text-align:center;
+          padding:32px;color:#dc2626">
+          Cannot connect to server.</div>`;
+      }
+    }
+
+    // ── Render timeline ──
+    function renderTimeline(schedule, isToday) {
       const container = document.getElementById('timeline');
       container.innerHTML = '';
 
-      const isToday = selectedDay.toDateString() === new Date().toDateString();
-      const now = new Date();
-
       if (schedule.length === 0) {
-        container.innerHTML = `<div class="empty-day">
-          <div>📭</div><p>No medicines scheduled for this day.</p></div>`;
+        container.innerHTML = `<div style="text-align:center;
+          padding:48px;color:#94a3b8">
+          <div style="font-size:36px;margin-bottom:10px">💊</div>
+          <p style="font-size:14px">No medicines scheduled for today.</p>
+        </div>`;
         return;
       }
 
       // Group by time
       const grouped = {};
-      schedule.forEach(med => {
-        if (!grouped[med.time]) grouped[med.time] = [];
-        grouped[med.time].push(med);
+      schedule.forEach(dose => {
+        if (!grouped[dose.time]) grouped[dose.time] = [];
+        grouped[dose.time].push(dose);
       });
 
       Object.keys(grouped).sort().forEach(time => {
@@ -515,15 +570,7 @@
 
         const [h, m]  = time.split(':').map(Number);
         const label12 = `${h === 0 ? 12 : h > 12 ? h-12 : h}:${String(m).padStart(2,'0')} ${h < 12 ? 'AM' : 'PM'}`;
-
-        // Determine status for past times on today
-        let slotStatus = 'pending';
-        if (isToday) {
-          const slotDate = new Date(); slotDate.setHours(h, m, 0);
-          if (now > slotDate) slotStatus = 'auto-past';
-        }
-
-        const hasMed = grouped[time].some(x => x.status === 'taken' || x.status === 'pending' || x.status === 'missed');
+        const hasMed  = grouped[time].length > 0;
 
         slot.innerHTML = `
           <div class="time-label">${label12}</div>
@@ -534,99 +581,129 @@
         container.appendChild(slot);
 
         const cardsDiv = slot.querySelector(`#slot-${time.replace(':','')}`);
-        grouped[time].forEach((med, idx) => {
-          cardsDiv.appendChild(makeCard(med, time, idx));
+        grouped[time].forEach(dose => {
+          cardsDiv.appendChild(makeCard(dose, isToday));
         });
       });
-
-      updateSummary();
     }
 
-    function makeCard(med, time, idx) {
+    // ── Make a schedule card ──
+    function makeCard(dose, isToday) {
       const div = document.createElement('div');
-      div.className = `schedule-card ${med.status}`;
+      div.className = `schedule-card ${dose.status}`;
 
-      const pillClass = med.status === 'taken'   ? 'pill-taken'
-                      : med.status === 'missed'  ? 'pill-missed'
-                      : 'pill-pending';
-      const pillText  = med.status === 'taken'   ? '✓ Taken'
-                      : med.status === 'missed'  ? '✗ Missed'
-                      : '⏳ Pending';
+      const icons  = { pending:'⏳', taken:'✓', missed:'✗' };
+      const labels = { pending:'Pending', taken:'Taken', missed:'Missed' };
+      const pillCls = `pill-${dose.status}`;
 
       div.innerHTML = `
         <div class="sc-left">
-          <div class="sc-icon ${med.color}">${med.icon}</div>
+          <div class="sc-icon icon-blue">💊</div>
           <div>
-            <div class="sc-name">${med.name}</div>
-            <div class="sc-sub">${med.qty} &nbsp;·&nbsp; ${med.food}</div>
+            <div class="sc-name">${dose.medicineName} ${dose.dosage || ''}</div>
+            <div class="sc-sub">
+              ${dose.quantity || '1 tablet'} &nbsp;·&nbsp;
+              ${dose.foodInstruction || 'After meal'}
+            </div>
           </div>
         </div>
         <div class="sc-right">
-          <span class="status-pill ${pillClass}">${pillText}</span>
-          ${med.status !== 'taken' ? `<button class="mark-btn"
-            onclick="markTaken('${time}', ${idx})">Mark Taken</button>` : ''}
+          <span class="status-pill ${pillCls}">
+            ${icons[dose.status] || '⏳'} ${labels[dose.status] || 'Pending'}
+          </span>
+          ${dose.status !== 'taken' && isToday ? `
+            <button class="mark-btn"
+              onclick="markTaken('${dose.scheduleId}','${dose.time}')">
+              Mark Taken
+            </button>` : ''}
         </div>`;
       return div;
     }
 
-    function markTaken(time, idx) {
-      const grouped = {};
-      schedule.forEach((med, i) => {
-        if (!grouped[med.time]) grouped[med.time] = [];
-        grouped[med.time].push({ med, i });
-      });
-      const entry = grouped[time][idx];
-      if (entry) schedule[entry.i].status = 'taken';
-      renderTimeline();
+    // ── Mark dose as taken ──
+    async function markTaken(scheduleId, time) {
+      try {
+        const data = await api(
+          `/api/schedule/${scheduleId}/taken`,
+          'POST',
+          { time }
+        );
+
+        if (data.success) {
+          loadSchedule(); // Refresh
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (err) {
+        alert('Cannot connect to server.');
+      }
     }
 
-    function updateSummary() {
-      const total   = schedule.length;
-      const taken   = schedule.filter(m => m.status === 'taken').length;
-      const pending = schedule.filter(m => m.status === 'pending').length;
-      const pct     = total ? Math.round(taken / total * 100) : 0;
+    // ── Update summary cards ──
+    function updateSummary(total, taken, pending) {
       document.getElementById('totalToday').textContent   = total;
       document.getElementById('takenToday').textContent   = taken;
       document.getElementById('pendingToday').textContent = pending;
+      const pct = total > 0 ? Math.round(taken / total * 100) : 0;
       document.getElementById('pctToday').textContent     = pct + '%';
     }
 
-    // ── Add dose ──
-    function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
-    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+    // ── Add dose modal ──
+    function openModal()  {
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
 
-    function addDose() {
+    async function addDose() {
       const name = document.getElementById('mName').value.trim();
       if (!name) { alert('Please enter a medicine name.'); return; }
 
-      const icons  = ['💊','🌿','💉','🔬','🧪'];
-      const colors = ['icon-blue','icon-green','icon-amber','icon-purple'];
-      const r      = Math.floor(Math.random() * 5);
+      const time = document.getElementById('mTime').value;
+      const qty  = document.getElementById('mQty').value  || '1 tablet';
+      const food = document.getElementById('mFood').value;
 
-      schedule.push({
-        time    : document.getElementById('mTime').value,
-        name,
-        qty     : document.getElementById('mQty').value  || '1 tablet',
-        food    : document.getElementById('mFood').value,
-        icon    : icons[r],
-        color   : colors[r % 4],
-        status  : 'pending'
-      });
+      try {
+        const data = await api('/api/schedule', 'POST', {
+          medicineName    : name,
+          quantity        : qty,
+          times           : [time],
+          foodInstruction : food,
+          repeat          : document.getElementById('mRepeat').value.toLowerCase()
+        });
 
-      closeModal();
-      renderTimeline();
-
-      document.getElementById('mName').value = '';
-      document.getElementById('mQty').value  = '';
+        if (data.success) {
+          closeModal();
+          loadSchedule();
+          document.getElementById('mName').value = '';
+          document.getElementById('mQty').value  = '';
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (err) {
+        alert('Cannot connect to server.');
+      }
     }
 
     document.getElementById('modalOverlay').addEventListener('click', function(e) {
       if (e.target === this) closeModal();
     });
 
+    // ── Date display ──
+    const now  = new Date();
+    const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+
     // ── Init ──
     buildWeek();
-    renderTimeline();
+    loadSchedule();
+
+    // ── Refresh every 60 seconds ──
+    setInterval(() => {
+      if (selectedDay.toDateString() === new Date().toDateString()) {
+        loadSchedule();
+      }
+    }, 60000);
   </script>
 
 </body>
