@@ -381,63 +381,69 @@
   </div>
 
   <script>
-    // ── Generate dummy history data ──
-    const medicines = [
-      { name: 'Paracetamol 500mg', dose: '1 tablet', icon: '💊', color: '#eff6ff' },
-      { name: 'Vitamin D3 60K',    dose: '1 capsule',icon: '💉', color: '#f0fdf4' },
-      { name: 'Amlodipine 5mg',    dose: '1 tablet', icon: '🌿', color: '#fffbeb' },
-      { name: 'Pantoprazole 40mg', dose: '1 tablet', icon: '🔬', color: '#faf5ff' },
-    ];
+    const token = localStorage.getItem('smartmed_token');
+    const user  = JSON.parse(localStorage.getItem('smartmed_user') || '{}');
+    if (!token) window.location = 'index.html';
 
-    const times = ['08:00','10:00','14:00','21:00'];
-    const notes = ['', '', 'Took with water', 'Reminded by box', '', 'Felt nauseous after', '', ''];
+    document.querySelector('.user-name').textContent = user.name || 'User';
+    document.querySelector('.user-avatar').textContent =
+      (user.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase();
 
-    function genHistory() {
-      const rows = [];
-      const today = new Date();
-      for (let d = 0; d < 30; d++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - d);
-        medicines.forEach((med, mi) => {
-          const status = Math.random() > 0.13
-            ? 'taken'
-            : Math.random() > 0.5 ? 'missed' : 'skipped';
-          const scheduledTime = times[mi];
-          const takenAt = status === 'taken'
-            ? (() => {
-                const [h,m] = scheduledTime.split(':').map(Number);
-                const offset = Math.floor(Math.random() * 20) - 5;
-                return `${String(h).padStart(2,'0')}:${String(Math.max(0,(m+offset)%60)).padStart(2,'0')}`;
-              })()
-            : '—';
-          rows.push({
-            date, med, status, scheduledTime, takenAt,
-            note: notes[Math.floor(Math.random() * notes.length)]
-          });
-        });
-      }
-      return rows.sort((a,b) => b.date - a.date);
+    async function api(endpoint) {
+      const res = await fetch(`http://localhost:5000${endpoint}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return res.json();
     }
 
-    let allRows    = genHistory();
-    let filtered   = [...allRows];
+    let allLogs    = [];
+    let filtered   = [];
     let currentPage = 1;
     const perPage   = 10;
-    let activeQuickFilter = 'all';
-    let sortCol = 'date', sortDir = 1;
 
-    // ── Heatmap ──
+    async function loadHistory() {
+      try {
+        const data = await api('/api/schedule/history');
+        if (!data.success) return;
+
+        allLogs  = data.logs;
+        filtered = [...allLogs];
+
+        // Update stats
+        const total   = allLogs.length;
+        const taken   = allLogs.filter(l => l.status === 'taken').length;
+        const missed  = allLogs.filter(l => l.status === 'missed').length;
+        const pct     = total > 0 ? Math.round(taken / total * 100) : 0;
+
+        document.querySelector('.stat-val.blue').textContent  = total;
+        document.querySelector('.stat-val.green').textContent = taken;
+        document.querySelector('.stat-val.red').textContent   = missed;
+        document.querySelectorAll('.stat-val.green')[1]
+          .textContent = pct + '%';
+
+        buildHeatmap();
+        renderTable();
+
+      } catch(err) {
+        console.error('History load error:', err);
+      }
+    }
+
     function buildHeatmap() {
       const container = document.getElementById('heatmap');
+      container.innerHTML = '';
       const today = new Date();
+
       for (let d = 29; d >= 0; d--) {
-        const date = new Date(today);
+        const date    = new Date(today);
         date.setDate(today.getDate() - d);
-        const dayRows = allRows.filter(r =>
-          r.date.toDateString() === date.toDateString());
-        const taken  = dayRows.filter(r => r.status === 'taken').length;
-        const missed = dayRows.filter(r => r.status === 'missed').length;
-        const total  = dayRows.length;
+        const dateStr = date.toDateString();
+
+        const dayLogs = allLogs.filter(l =>
+          new Date(l.date).toDateString() === dateStr);
+        const taken  = dayLogs.filter(l => l.status === 'taken').length;
+        const missed = dayLogs.filter(l => l.status === 'missed').length;
+        const total  = dayLogs.length;
 
         let cls = 'hm-0';
         if (missed > 0 && taken === 0) cls = 'hm-miss';
@@ -448,33 +454,20 @@
 
         const box = document.createElement('div');
         box.className = `heatmap-day ${cls}`;
-        box.title = `${date.toDateString()}: ${taken}/${total} taken`;
+        box.title     = `${dateStr}: ${taken}/${total} taken`;
         container.appendChild(box);
       }
-    }
-
-    // ── Filters ──
-    function setFilter(type, btn) {
-      activeQuickFilter = type;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if (type !== 'all') document.getElementById('statusFilter').value = type;
-      else document.getElementById('statusFilter').value = '';
-      filterTable();
     }
 
     function filterTable() {
       const search = document.getElementById('searchInput').value.toLowerCase();
       const status = document.getElementById('statusFilter').value;
       const med    = document.getElementById('medFilter').value;
-      const range  = parseInt(document.getElementById('rangeFilter').value);
-      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - range);
 
-      filtered = allRows.filter(r => {
-        if (r.date < cutoff) return false;
-        if (search && !r.med.name.toLowerCase().includes(search)) return false;
-        if (status && r.status !== status) return false;
-        if (med    && r.med.name !== med)  return false;
+      filtered = allLogs.filter(l => {
+        if (search && !l.medicineName.toLowerCase().includes(search)) return false;
+        if (status && l.status !== status) return false;
+        if (med    && l.medicineName !== med) return false;
         return true;
       });
 
@@ -482,107 +475,100 @@
       renderTable();
     }
 
-    // ── Sort ──
-    function sortBy(col) {
-      if (sortCol === col) sortDir *= -1;
-      else { sortCol = col; sortDir = 1; }
-      filtered.sort((a,b) => {
-        if (col === 'date')   return sortDir * (b.date - a.date);
-        if (col === 'status') return sortDir * a.status.localeCompare(b.status);
-        return 0;
-      });
-      renderTable();
+    function setFilter(type, btn) {
+      document.querySelectorAll('.filter-btn')
+        .forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('statusFilter').value = type === 'all' ? '' : type;
+      filterTable();
     }
 
-    // ── Render table ──
     function renderTable() {
-      const tbody   = document.getElementById('historyBody');
-      const start   = (currentPage - 1) * perPage;
-      const pageRows = filtered.slice(start, start + perPage);
+      const tbody = document.getElementById('historyBody');
+      const start = (currentPage - 1) * perPage;
+      const rows  = filtered.slice(start, start + perPage);
       tbody.innerHTML = '';
 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6"
           style="text-align:center;padding:32px;color:#94a3b8">
           No records found.</td></tr>`;
+        document.getElementById('rowCount').textContent = '(0 records)';
+        document.getElementById('pageInfo').textContent = 'No results';
+        document.getElementById('pageBtns').innerHTML   = '';
+        return;
       }
 
-      pageRows.forEach(r => {
-        const pillCls  = r.status === 'taken'   ? 'pill-taken'
-                       : r.status === 'missed'  ? 'pill-missed'
+      rows.forEach(l => {
+        const pillCls  = l.status === 'taken'  ? 'pill-taken'
+                       : l.status === 'missed' ? 'pill-missed'
                        : 'pill-skipped';
-        const pillText = r.status === 'taken'   ? '✓ Taken'
-                       : r.status === 'missed'  ? '✗ Missed'
+        const pillText = l.status === 'taken'  ? '✓ Taken'
+                       : l.status === 'missed' ? '✗ Missed'
                        : '— Skipped';
-
-        const dateStr = r.date.toLocaleDateString('en-IN',
+        const dateStr  = new Date(l.date).toLocaleDateString('en-IN',
           { day:'numeric', month:'short', year:'numeric' });
+        const takenStr = l.takenAt
+          ? new Date(l.takenAt).toLocaleTimeString('en-IN',
+              { hour:'2-digit', minute:'2-digit' })
+          : '—';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="color:#64748b;font-size:12px">
-            ${dateStr}
-          </td>
+          <td style="color:#64748b;font-size:12px">${dateStr}</td>
           <td>
-            <div class="med-cell">
-              <div class="med-cell-icon"
-                style="background:${r.med.color}">${r.med.icon}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:30px;height:30px;border-radius:8px;
+                background:#eff6ff;display:flex;align-items:center;
+                justify-content:center;font-size:14px">💊</div>
               <div>
-                <div class="med-cell-name">${r.med.name}</div>
-                <div class="med-cell-dose">${r.med.dose}</div>
+                <div style="font-weight:500;color:#1e293b">
+                  ${l.medicineName}</div>
+                <div style="font-size:11px;color:#94a3b8">
+                  ${l.dosage || ''}</div>
               </div>
             </div>
           </td>
           <td><span class="status-pill ${pillCls}">${pillText}</span></td>
-          <td style="color:#64748b">${r.scheduledTime}</td>
-          <td style="color:#64748b">${r.takenAt}</td>
-          <td style="color:#94a3b8;font-size:12px">${r.note || '—'}</td>`;
+          <td style="color:#64748b">${l.scheduledTime || '—'}</td>
+          <td style="color:#64748b">${takenStr}</td>
+          <td style="color:#94a3b8;font-size:12px">—</td>`;
         tbody.appendChild(tr);
       });
 
-      // Pagination
       const totalPages = Math.ceil(filtered.length / perPage);
+      document.getElementById('rowCount').textContent =
+        `(${filtered.length} records)`;
       document.getElementById('pageInfo').textContent =
-        `Showing ${start+1}–${Math.min(start+perPage, filtered.length)} of ${filtered.length}`;
+        `Showing ${start+1}–${Math.min(start+perPage,filtered.length)} of ${filtered.length}`;
 
       const pageBtns = document.getElementById('pageBtns');
       pageBtns.innerHTML = '';
       for (let i = 1; i <= totalPages; i++) {
-        if (totalPages > 7 && i > 3 && i < totalPages - 1
-            && Math.abs(i - currentPage) > 1) {
-          if (i === 4) pageBtns.innerHTML +=
-            `<div class="page-btn" style="border:none;cursor:default">…</div>`;
-          continue;
-        }
         const btn = document.createElement('div');
         btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
         btn.textContent = i;
         btn.onclick = () => { currentPage = i; renderTable(); };
         pageBtns.appendChild(btn);
       }
-
-      document.getElementById('rowCount').textContent =
-        `(${filtered.length} records)`;
     }
 
-    // ── Export CSV ──
     function exportCSV() {
-      const headers = ['Date','Medicine','Dosage','Status','Scheduled','Taken At','Note'];
-      const rows = filtered.map(r => [
-        r.date.toLocaleDateString('en-IN'),
-        r.med.name, r.med.dose, r.status,
-        r.scheduledTime, r.takenAt, r.note || ''
+      const headers = ['Date','Medicine','Dosage','Status','Scheduled','Taken At'];
+      const rows = filtered.map(l => [
+        new Date(l.date).toLocaleDateString('en-IN'),
+        l.medicineName, l.dosage || '', l.status,
+        l.scheduledTime || '', l.takenAt
+          ? new Date(l.takenAt).toLocaleTimeString('en-IN') : ''
       ]);
       const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-      const a = document.createElement('a');
-      a.href = 'data:text/csv,' + encodeURIComponent(csv);
+      const a   = document.createElement('a');
+      a.href     = 'data:text/csv,' + encodeURIComponent(csv);
       a.download = 'smartmed_history.csv';
       a.click();
     }
 
-    // ── Init ──
-    buildHeatmap();
-    renderTable();
+    loadHistory();
   </script>
 
 </body>

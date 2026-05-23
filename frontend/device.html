@@ -627,98 +627,329 @@
   </div>
 
   <script>
-    // ── Toast helper ──
-    function showToast(icon, msg, duration = 3000) {
-      document.getElementById('toastIcon').textContent = icon;
-      document.getElementById('toastMsg').textContent  = msg;
-      const t = document.getElementById('toast');
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), duration);
+ // ── Authentication ──
+    const token = localStorage.getItem('smartmed_token');
+
+    const user =
+      JSON.parse(
+        localStorage.getItem('smartmed_user') || '{}'
+      );
+
+    // Redirect if not logged in
+    if (!token) {
+      window.location = 'index.html';
     }
 
-    // ── Command sender ──
-    // In Phase 3 this will be a real fetch() call to your Node.js backend
-    // which then sends the command to ESP32
-    function sendCommand(cmd) {
-      const messages = {
-        open_lid    : ['🔓', 'Lid open command sent to box!'],
-        close_lid   : ['🔒', 'Lid close command sent to box!'],
-        buzz        : ['🔔', 'Test buzzer triggered!'],
-        sync        : ['🔄', 'Schedule synced to box!'],
-        face_enroll : ['🤳', 'Face enrollment started on box!'],
-        restart     : ['⚡', 'Restart command sent to box!'],
+    // Show logged in user
+    document.querySelector('.user-name').textContent =
+      user.name || 'User';
+
+    document.querySelector('.user-avatar').textContent =
+      (user.name || 'U')
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase();
+
+    // ── API helper ──
+    async function api(endpoint, method = 'GET', body = null) {
+
+      const options = {
+        method,
+
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       };
 
-      const [icon, msg] = messages[cmd] || ['📡', 'Command sent!'];
-      showToast(icon, msg);
-      addLog(icon, msg);
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
 
-      // ── THIS IS WHERE REAL API CALL GOES IN PHASE 3 ──
-      // fetch('http://your-backend/api/device/command', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ command: cmd })
-      // })
+      const response = await fetch(
+        `http://localhost:5000${endpoint}`,
+        options
+      );
 
-      // Update lid status display
-      if (cmd === 'open_lid') {
-        document.getElementById('lidStatus').textContent = '🔓 Open';
-      } else if (cmd === 'close_lid') {
-        document.getElementById('lidStatus').textContent = '🔒 Closed';
+      return response.json();
+    }
+
+    // ── Toast helper ──
+    function showToast(icon, msg, duration = 3000) {
+
+      document.getElementById('toastIcon').textContent = icon;
+
+      document.getElementById('toastMsg').textContent =
+        msg;
+
+      const t = document.getElementById('toast');
+
+      t.classList.add('show');
+
+      setTimeout(() => {
+        t.classList.remove('show');
+      }, duration);
+    }
+
+    // ── Load device status from backend ──
+    async function loadStatus() {
+
+      try {
+
+        const data =
+          await api('/api/device/status');
+
+        if (data.success) {
+
+          // Lid status
+          document.getElementById('lidStatus').textContent =
+            data.lidStatus === 'open'
+              ? '🔓 Open'
+              : '🔒 Closed';
+
+          // Sync time
+          document.getElementById('lastSync').textContent =
+            'Just now';
+
+          // Battery bar
+          const bat = data.battery || 78;
+
+          document.querySelector('.battery-fill')
+            .style.width = bat + '%';
+
+          document.querySelector('.battery-fill')
+            .style.background =
+              bat > 50
+                ? '#16a34a'
+                : bat > 20
+                ? '#f59e0b'
+                : '#dc2626';
+        }
+
+      } catch(err) {
+
+        console.error(
+          'Device status error:',
+          err
+        );
       }
     }
 
-    // ── Add to activity log ──
-    function addLog(icon, text) {
-      const log  = document.getElementById('activityLog');
-      const now  = new Date();
-      const time = now.toLocaleTimeString('en-IN',
-        { hour:'2-digit', minute:'2-digit' });
+    // ── Send commands to backend → ESP32 ──
+    async function sendCommand(cmd) {
 
-      const colorMap = {
-        '🔓':'log-green','🔒':'log-red','🔔':'log-amber',
-        '🔄':'log-blue', '🤳':'log-blue','⚡':'log-amber','💾':'log-blue'
+      const messages = {
+
+        open_lid: [
+          '🔓',
+          'Lid open command sent!'
+        ],
+
+        close_lid: [
+          '🔒',
+          'Lid close command sent!'
+        ],
+
+        buzz: [
+          '🔔',
+          'Test buzzer triggered!'
+        ],
+
+        sync: [
+          '🔄',
+          'Schedule synced to box!'
+        ],
+
+        face_enroll: [
+          '🤳',
+          'Face enrollment started!'
+        ],
+
+        restart: [
+          '⚡',
+          'Restart command sent!'
+        ]
       };
 
-      const item = document.createElement('div');
+      const [icon, msg] =
+        messages[cmd] || ['📡', 'Command sent!'];
+
+      try {
+
+        const endpointMap = {
+
+          open_lid:
+            '/api/device/open-lid',
+
+          close_lid:
+            '/api/device/close-lid',
+
+          buzz:
+            '/api/device/buzz',
+
+          sync:
+            '/api/device/sync',
+
+          face_enroll:
+            '/api/device/open-lid',
+
+          restart:
+            '/api/device/restart'
+        };
+
+        const data =
+          await api(
+            endpointMap[cmd],
+            'POST'
+          );
+
+        showToast(
+          icon,
+          data.message || msg
+        );
+
+        addLog(
+          icon,
+          data.message || msg
+        );
+
+        // Update UI instantly
+        if (cmd === 'open_lid') {
+
+          document.getElementById('lidStatus')
+            .textContent = '🔓 Open';
+
+        } else if (cmd === 'close_lid') {
+
+          document.getElementById('lidStatus')
+            .textContent = '🔒 Closed';
+        }
+
+      } catch(err) {
+
+        showToast(
+          '❌',
+          'Cannot connect to server'
+        );
+      }
+    }
+
+    // ── Add activity log ──
+    function addLog(icon, text) {
+
+      const log =
+        document.getElementById('activityLog');
+
+      const time =
+        new Date().toLocaleTimeString(
+          'en-IN',
+          {
+            hour: '2-digit',
+            minute: '2-digit'
+          }
+        );
+
+      const colorMap = {
+
+        '🔓': 'log-green',
+        '🔒': 'log-red',
+        '🔔': 'log-amber',
+        '🔄': 'log-blue',
+        '🤳': 'log-blue',
+        '⚡': 'log-amber',
+        '💾': 'log-blue',
+        '❌': 'log-red'
+      };
+
+      const item =
+        document.createElement('div');
+
       item.className = 'log-item';
+
       item.innerHTML = `
         <div class="log-dot ${colorMap[icon] || 'log-blue'}"></div>
         <div class="log-text">${text}</div>
-        <div class="log-time">${time}</div>`;
+        <div class="log-time">${time}</div>
+      `;
 
-      log.insertBefore(item, log.firstChild);
+      log.insertBefore(
+        item,
+        log.firstChild
+      );
     }
 
+    // ── Clear logs ──
     function clearLog() {
-      document.getElementById('activityLog').innerHTML =
-        `<div style="text-align:center;padding:24px;
-          color:#94a3b8;font-size:13px">No activity yet.</div>`;
+
+      document.getElementById('activityLog')
+        .innerHTML = `
+          <div style="
+            text-align:center;
+            padding:24px;
+            color:#94a3b8;
+            font-size:13px">
+
+            No activity yet.
+
+          </div>
+        `;
     }
 
+    // ── Save settings ──
     function saveSettings() {
-      showToast('💾', 'Settings saved and sent to box!');
-      addLog('💾', 'Box settings updated');
+
+      showToast(
+        '💾',
+        'Settings saved and sent to box!'
+      );
+
+      addLog(
+        '💾',
+        'Box settings updated'
+      );
     }
 
     // ── Live uptime counter ──
     let uptimeSeconds = 8040;
+
     setInterval(() => {
+
       uptimeSeconds++;
-      const h = Math.floor(uptimeSeconds / 3600);
-      const m = Math.floor((uptimeSeconds % 3600) / 60);
-      document.getElementById('uptime').textContent = `${h}h ${m}m`;
+
+      const h =
+        Math.floor(uptimeSeconds / 3600);
+
+      const m =
+        Math.floor(
+          (uptimeSeconds % 3600) / 60
+        );
+
+      document.getElementById('uptime')
+        .textContent = `${h}h ${m}m`;
+
     }, 1000);
 
-    // ── Live sync time ──
+    // ── Last sync timer ──
     let syncSeconds = 0;
+
     setInterval(() => {
+
       syncSeconds++;
-      const txt = syncSeconds < 60
-        ? `${syncSeconds}s ago`
-        : `${Math.floor(syncSeconds/60)}m ago`;
-      document.getElementById('lastSync').textContent = txt;
+
+      document.getElementById('lastSync')
+        .textContent =
+          syncSeconds < 60
+            ? `${syncSeconds}s ago`
+            : `${Math.floor(syncSeconds / 60)}m ago`;
+
     }, 1000);
+
+    // Initial load
+    loadStatus();
+
+    // Refresh every 30 seconds
+    setInterval(loadStatus, 30000);
   </script>
 
 </body>
