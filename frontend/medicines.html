@@ -309,7 +309,7 @@
         }
       };
       if (body) options.body = JSON.stringify(body);
-      const res = await fetch(`http://localhost:5000${endpoint}`, options);
+      const res = await fetch(`https://smartmed-backend-wute.onrender.com${endpoint}`, options);
       return res.json();
     }
 

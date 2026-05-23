@@ -390,7 +390,7 @@
       (user.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase();
 
     async function api(endpoint) {
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`https://smartmed-backend-wute.onrender.com${endpoint}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       return res.json();
