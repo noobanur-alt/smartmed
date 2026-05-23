@@ -6,405 +6,166 @@
   <title>SmartMed – My Dashboard</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f0f4f8;
       display: flex;
     }
-
-    /* ── Sidebar ── */
     .sidebar {
-      width: 220px;
-      background: #1a73e8;
-      min-height: 100vh;
-      padding: 24px 0;
-      position: fixed;
-      top: 0; left: 0;
+      width: 220px; background: #1a73e8;
+      min-height: 100vh; padding: 24px 0;
+      position: fixed; top: 0; left: 0;
     }
-
     .sidebar-logo {
-      color: white;
-      font-size: 22px;
-      font-weight: 700;
+      color: white; font-size: 22px; font-weight: 700;
       padding: 0 24px 20px;
       border-bottom: 1px solid rgba(255,255,255,0.2);
     }
-
     .sidebar-logo span {
-      font-size: 11px;
-      display: block;
-      font-weight: 400;
-      opacity: 0.75;
-      margin-top: 3px;
+      font-size: 11px; display: block;
+      font-weight: 400; opacity: 0.75; margin-top: 3px;
     }
-
-    /* User profile in sidebar */
     .sidebar-user {
       padding: 16px 24px;
       border-bottom: 1px solid rgba(255,255,255,0.2);
       margin-bottom: 8px;
     }
-
     .user-avatar {
-      width: 44px;
-      height: 44px;
-      background: rgba(255,255,255,0.25);
-      border-radius: 50%;
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.25); border-radius: 50%;
+      color: white; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
       margin-bottom: 8px;
     }
-
-    .user-name {
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .user-age {
-      color: rgba(255,255,255,0.65);
-      font-size: 11px;
-      margin-top: 2px;
-    }
-
+    .user-name { color: white; font-size: 14px; font-weight: 600; }
+    .user-age  { color: rgba(255,255,255,0.65); font-size: 11px; margin-top: 2px; }
     .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 24px;
-      color: rgba(255,255,255,0.8);
-      font-size: 14px;
-      cursor: pointer;
-      transition: background 0.15s;
-      text-decoration: none;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px; color: rgba(255,255,255,0.8);
+      font-size: 14px; cursor: pointer;
+      transition: background 0.15s; text-decoration: none;
     }
-
     .nav-item:hover, .nav-item.active {
-      background: rgba(255,255,255,0.15);
-      color: white;
+      background: rgba(255,255,255,0.15); color: white;
     }
-
     .nav-section {
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
+      font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(255,255,255,0.4);
       padding: 14px 24px 4px;
     }
-
-    /* ── Main ── */
-    .main {
-      margin-left: 220px;
-      flex: 1;
-      padding: 28px;
-    }
-
+    .main { margin-left: 220px; flex: 1; padding: 28px; }
     .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 24px;
     }
-
-    .topbar h2 {
-      font-size: 22px;
-      color: #1e293b;
-    }
-
-    .topbar p {
-      font-size: 13px;
-      color: #64748b;
-      margin-top: 3px;
-    }
-
+    .topbar h2 { font-size: 22px; color: #1e293b; }
+    .topbar p  { font-size: 13px; color: #64748b; margin-top: 3px; }
     .date-badge {
-      font-size: 13px;
-      color: #64748b;
-      background: white;
-      padding: 7px 16px;
-      border-radius: 20px;
-      border: 1px solid #e2e8f0;
+      font-size: 13px; color: #64748b; background: white;
+      padding: 7px 16px; border-radius: 20px; border: 1px solid #e2e8f0;
     }
-
-    /* ── Stat cards ── */
     .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-bottom: 24px;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 14px; margin-bottom: 24px;
     }
-
     .stat-card {
-      background: white;
-      border-radius: 12px;
-      padding: 18px 20px;
-      border: 1px solid #e2e8f0;
+      background: white; border-radius: 12px;
+      padding: 18px 20px; border: 1px solid #e2e8f0;
     }
-
-    .stat-icon {
-      font-size: 22px;
-      margin-bottom: 10px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: #94a3b8;
-      font-weight: 500;
-      margin-bottom: 6px;
-    }
-
-    .stat-value {
-      font-size: 26px;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    .stat-sub {
-      font-size: 11px;
-      color: #94a3b8;
-      margin-top: 3px;
-    }
-
+    .stat-icon  { font-size: 22px; margin-bottom: 10px; }
+    .stat-label { font-size: 12px; color: #94a3b8; font-weight: 500; margin-bottom: 6px; }
+    .stat-value { font-size: 26px; font-weight: 700; color: #1e293b; }
+    .stat-sub   { font-size: 11px; color: #94a3b8; margin-top: 3px; }
     .stat-card.green .stat-value { color: #16a34a; }
-    .stat-card.red   .stat-value { color: #dc2626; }
     .stat-card.blue  .stat-value { color: #1a73e8; }
     .stat-card.amber .stat-value { color: #d97706; }
-
-    /* ── Next dose banner ── */
     .next-dose-banner {
       background: linear-gradient(135deg, #1a73e8, #0f52ba);
-      border-radius: 12px;
-      padding: 20px 24px;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
+      border-radius: 12px; padding: 20px 24px; color: white;
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 24px;
     }
-
     .next-dose-label {
-      font-size: 12px;
-      opacity: 0.8;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      font-size: 12px; opacity: 0.8; margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: 0.06em;
     }
-
-    .next-dose-name {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .next-dose-detail {
-      font-size: 13px;
-      opacity: 0.85;
-      margin-top: 4px;
-    }
-
-    .next-dose-time {
-      text-align: right;
-    }
-
-    .countdown {
-      font-size: 28px;
-      font-weight: 700;
-    }
-
-    .countdown-label {
-      font-size: 12px;
-      opacity: 0.75;
-      margin-top: 2px;
-    }
-
-    /* ── Two column ── */
+    .next-dose-name   { font-size: 20px; font-weight: 700; }
+    .next-dose-detail { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+    .next-dose-time   { text-align: right; }
+    .countdown        { font-size: 28px; font-weight: 700; }
+    .countdown-label  { font-size: 12px; opacity: 0.75; margin-top: 2px; }
     .two-col {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 20px;
+      display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px;
     }
-
     .panel {
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-      padding: 20px;
+      background: white; border-radius: 12px;
+      border: 1px solid #e2e8f0; padding: 20px;
     }
-
     .panel-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #1e293b;
-      margin-bottom: 16px;
-      display: flex;
+      font-size: 15px; font-weight: 600; color: #1e293b;
+      margin-bottom: 16px; display: flex;
+      justify-content: space-between; align-items: center;
+    }
+    .panel-title span { font-size: 12px; color: #94a3b8; font-weight: 400; }
+    .schedule-row {
+      display: flex; align-items: center;
       justify-content: space-between;
-      align-items: center;
+      padding: 12px 0; border-bottom: 1px solid #f1f5f9;
     }
-
-    .panel-title span {
-      font-size: 12px;
-      color: #94a3b8;
-      font-weight: 400;
-    }
-
-    /* ── Medicine rows ── */
-    .med-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .med-row:last-child { border-bottom: none; }
-
-    .med-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .med-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .dot-taken   { background: #16a34a; }
-    .dot-pending { background: #f59e0b; }
-    .dot-missed  { background: #dc2626; }
-
-    .med-info-name {
-      font-size: 14px;
-      font-weight: 500;
-      color: #1e293b;
-    }
-
-    .med-info-sub {
-      font-size: 12px;
-      color: #94a3b8;
-      margin-top: 2px;
-    }
-
+    .schedule-row:last-child { border-bottom: none; }
+    .med-name { font-size: 14px; font-weight: 500; color: #1e293b; }
+    .med-time { font-size: 12px; color: #94a3b8; margin-top: 2px; }
     .pill-badge {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
     }
-
     .pill-taken   { background: #dcfce7; color: #16a34a; }
     .pill-pending { background: #fef9c3; color: #ca8a04; }
     .pill-missed  { background: #fee2e2; color: #dc2626; }
-
-    /* ── Right column panels ── */
     .quick-action-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid #e2e8f0;
-      background: #f8fafc;
-      color: #1e293b;
-      transition: background 0.15s;
-      text-align: left;
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 12px 14px; margin-bottom: 8px;
+      border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; border: 1px solid #e2e8f0;
+      background: #f8fafc; color: #1e293b;
+      transition: background 0.15s; text-align: left;
     }
-
     .quick-action-btn:hover { background: #e9f0fb; }
-
     .quick-action-btn.primary {
-      background: #1a73e8;
-      color: white;
-      border-color: #1a73e8;
+      background: #1a73e8; color: white; border-color: #1a73e8;
     }
-
     .quick-action-btn.primary:hover { background: #1558b0; }
-
-    /* ── Reminder settings ── */
     .reminder-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #f1f5f9;
-      font-size: 13px;
+      display: flex; justify-content: space-between;
+      align-items: center; padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9; font-size: 13px;
     }
-
     .reminder-row:last-child { border-bottom: none; }
-
     .reminder-label { color: #475569; }
-
     .toggle {
-      width: 36px;
-      height: 20px;
-      background: #16a34a;
-      border-radius: 10px;
-      position: relative;
-      cursor: pointer;
+      width: 36px; height: 20px; background: #16a34a;
+      border-radius: 10px; position: relative; cursor: pointer;
     }
-
     .toggle.off { background: #cbd5e1; }
-
     .toggle-knob {
-      width: 14px;
-      height: 14px;
-      background: white;
-      border-radius: 50%;
-      position: absolute;
-      top: 3px;
-      right: 3px;
-      transition: right 0.2s;
+      width: 14px; height: 14px; background: white;
+      border-radius: 50%; position: absolute;
+      top: 3px; right: 3px; transition: right 0.2s;
     }
-
     .toggle.off .toggle-knob { right: unset; left: 3px; }
-
-    /* ── Weekly progress ── */
     .week-grid {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
-      gap: 6px;
+      display: flex; justify-content: space-between;
+      margin-top: 8px; gap: 6px;
     }
-
     .day-col { text-align: center; flex: 1; }
-
     .day-bar-wrap {
-      height: 60px;
-      background: #f1f5f9;
-      border-radius: 6px;
-      display: flex;
-      align-items: flex-end;
-      overflow: hidden;
-      margin-bottom: 4px;
+      height: 60px; background: #f1f5f9; border-radius: 6px;
+      display: flex; align-items: flex-end;
+      overflow: hidden; margin-bottom: 4px;
     }
-
-    .day-bar {
-      width: 100%;
-      border-radius: 6px 6px 0 0;
-      transition: height 0.3s;
-    }
-
-    .day-label {
-      font-size: 11px;
-      color: #94a3b8;
-    }
-
-    .day-pct {
-      font-size: 10px;
-      color: #64748b;
-      font-weight: 500;
-    }
+    .day-bar { width: 100%; border-radius: 6px 6px 0 0; transition: height 0.3s; }
+    .day-label { font-size: 11px; color: #94a3b8; }
+    .day-pct   { font-size: 10px; color: #64748b; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -412,26 +173,21 @@
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">
-      SmartMed
-      <span>My Medicine Manager</span>
+      SmartMed <span>My Medicine Manager</span>
     </div>
-
     <div class="sidebar-user">
       <div class="user-avatar">AS</div>
       <div class="user-name">Anurag Sharma</div>
-      <div class="user-age">Age 22 &nbsp;·&nbsp; Patient ID: SM-001</div>
+      <div class="user-age">Age 22 · Patient ID: SM-001</div>
     </div>
-
     <div class="nav-section">My Health</div>
     <a class="nav-item active" href="dashboard.html">🏠 &nbsp; Dashboard</a>
     <a class="nav-item" href="medicines.html">💊 &nbsp; My Medicines</a>
     <a class="nav-item" href="schedule.html">📅 &nbsp; My Schedule</a>
     <a class="nav-item" href="prescription.html">📄 &nbsp; Scan Prescription</a>
-
     <div class="nav-section">History</div>
     <a class="nav-item" href="history.html">📋 &nbsp; Dose History</a>
     <a class="nav-item" href="reports.html">📊 &nbsp; My Reports</a>
-
     <div class="nav-section">Device</div>
     <a class="nav-item" href="device.html">📦 &nbsp; My SmartMed Box</a>
     <a class="nav-item" href="settings.html">⚙️ &nbsp; Settings</a>
@@ -454,26 +210,26 @@
       <div class="stat-card blue">
         <div class="stat-icon">💊</div>
         <div class="stat-label">Today's Doses</div>
-        <div class="stat-value">4</div>
+        <div class="stat-value" id="statTotal">--</div>
         <div class="stat-sub">total scheduled</div>
       </div>
       <div class="stat-card green">
         <div class="stat-icon">✅</div>
         <div class="stat-label">Taken</div>
-        <div class="stat-value">2</div>
+        <div class="stat-value" id="statTaken">--</div>
         <div class="stat-sub">doses completed</div>
       </div>
       <div class="stat-card amber">
         <div class="stat-icon">⏳</div>
         <div class="stat-label">Pending</div>
-        <div class="stat-value">2</div>
+        <div class="stat-value" id="statPending">--</div>
         <div class="stat-sub">doses remaining</div>
       </div>
       <div class="stat-card green">
         <div class="stat-icon">📈</div>
-        <div class="stat-label">This Week</div>
-        <div class="stat-value">87%</div>
-        <div class="stat-sub">compliance rate</div>
+        <div class="stat-label">Compliance</div>
+        <div class="stat-value" id="statPct">--</div>
+        <div class="stat-sub">today</div>
       </div>
     </div>
 
@@ -481,8 +237,8 @@
     <div class="next-dose-banner">
       <div>
         <div class="next-dose-label">Next dose due</div>
-        <div class="next-dose-name">Amlodipine 5mg</div>
-        <div class="next-dose-detail">1 tablet &nbsp;·&nbsp; Take after lunch &nbsp;·&nbsp; 2:00 PM</div>
+        <div class="next-dose-name" id="nextDoseName">Loading...</div>
+        <div class="next-dose-detail" id="nextDoseDetail">Fetching schedule...</div>
       </div>
       <div class="next-dose-time">
         <div class="countdown" id="countdown">--:--</div>
@@ -493,63 +249,23 @@
     <!-- Two columns -->
     <div class="two-col">
 
-      <!-- Today's medicines -->
+      <!-- Left column -->
       <div>
         <div class="panel" style="margin-bottom:20px">
           <div class="panel-title">
             Today's Medicines
             <span id="todayDate"></span>
           </div>
-
-          <div class="med-row">
-            <div class="med-left">
-              <div class="med-dot dot-taken"></div>
-              <div>
-                <div class="med-info-name">Paracetamol 500mg</div>
-                <div class="med-info-sub">8:00 AM &nbsp;·&nbsp; 1 tablet &nbsp;·&nbsp; After breakfast</div>
-              </div>
-            </div>
-            <span class="pill-badge pill-taken">✓ Taken</span>
-          </div>
-
-          <div class="med-row">
-            <div class="med-left">
-              <div class="med-dot dot-taken"></div>
-              <div>
-                <div class="med-info-name">Vitamin D3 60K</div>
-                <div class="med-info-sub">10:00 AM &nbsp;·&nbsp; 1 capsule &nbsp;·&nbsp; With water</div>
-              </div>
-            </div>
-            <span class="pill-badge pill-taken">✓ Taken</span>
-          </div>
-
-          <div class="med-row">
-            <div class="med-left">
-              <div class="med-dot dot-pending"></div>
-              <div>
-                <div class="med-info-name">Amlodipine 5mg</div>
-                <div class="med-info-sub">2:00 PM &nbsp;·&nbsp; 1 tablet &nbsp;·&nbsp; After lunch</div>
-              </div>
-            </div>
-            <span class="pill-badge pill-pending">⏳ Pending</span>
-          </div>
-
-          <div class="med-row">
-            <div class="med-left">
-              <div class="med-dot dot-pending"></div>
-              <div>
-                <div class="med-info-name">Pantoprazole 40mg</div>
-                <div class="med-info-sub">9:00 PM &nbsp;·&nbsp; 1 tablet &nbsp;·&nbsp; Before dinner</div>
-              </div>
-            </div>
-            <span class="pill-badge pill-pending">⏳ Pending</span>
+          <div id="scheduleList">
+            <div style="text-align:center;padding:24px;
+              color:#94a3b8;font-size:13px">Loading...</div>
           </div>
         </div>
 
         <!-- Weekly compliance chart -->
         <div class="panel">
           <div class="panel-title">This Week's Compliance</div>
-          <div class="week-grid">
+          <div class="week-grid" id="weekGrid">
             <div class="day-col">
               <div class="day-bar-wrap">
                 <div class="day-bar" style="height:100%;background:#16a34a"></div>
@@ -609,7 +325,6 @@
         <!-- Quick actions -->
         <div class="panel" style="margin-bottom:20px">
           <div class="panel-title">Quick Actions</div>
-
           <button class="quick-action-btn primary"
             onclick="window.location='prescription.html'">
             📄 &nbsp; Scan New Prescription
@@ -628,25 +343,32 @@
           </button>
         </div>
 
-        <!-- Reminder settings -->
+        <!-- Reminders -->
         <div class="panel" style="margin-bottom:20px">
           <div class="panel-title">My Reminders</div>
-
           <div class="reminder-row">
             <div class="reminder-label">Browser notifications</div>
-            <div class="toggle"><div class="toggle-knob"></div></div>
+            <div class="toggle" onclick="this.classList.toggle('off')">
+              <div class="toggle-knob"></div>
+            </div>
           </div>
           <div class="reminder-row">
             <div class="reminder-label">Buzzer alarm (box)</div>
-            <div class="toggle"><div class="toggle-knob"></div></div>
+            <div class="toggle" onclick="this.classList.toggle('off')">
+              <div class="toggle-knob"></div>
+            </div>
           </div>
           <div class="reminder-row">
             <div class="reminder-label">Email alerts</div>
-            <div class="toggle off"><div class="toggle-knob"></div></div>
+            <div class="toggle off" onclick="this.classList.toggle('off')">
+              <div class="toggle-knob"></div>
+            </div>
           </div>
           <div class="reminder-row">
             <div class="reminder-label">Caregiver notification</div>
-            <div class="toggle off"><div class="toggle-knob"></div></div>
+            <div class="toggle off" onclick="this.classList.toggle('off')">
+              <div class="toggle-knob"></div>
+            </div>
           </div>
         </div>
 
@@ -654,11 +376,13 @@
         <div class="panel">
           <div class="panel-title">My SmartMed Box</div>
           <div style="font-size:13px;color:#475569;line-height:2">
-            <div>Status &nbsp;<strong style="color:#16a34a">● Online</strong></div>
+            <div>Status &nbsp;<strong id="boxStatus"
+              style="color:#16a34a">● Checking...</strong></div>
             <div>Box ID &nbsp;&nbsp;<strong>SM-BOX-001</strong></div>
             <div>WiFi &nbsp;&nbsp;&nbsp;&nbsp;<strong>Connected</strong></div>
-            <div>Last sync &nbsp;<strong>2 mins ago</strong></div>
-            <div>Lid &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Closed 🔒</strong></div>
+            <div>Last sync &nbsp;<strong id="lastSync">Just now</strong></div>
+            <div>Lid &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong
+              id="lidStatus">Closed 🔒</strong></div>
           </div>
         </div>
 
@@ -667,30 +391,162 @@
   </div>
 
   <script>
-    // Date display
-    const now = new Date();
-    const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
-    document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-IN', opts);
-    document.getElementById('todayDate').textContent = now.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+    // ── Auth check ──
+    const token = localStorage.getItem('smartmed_token');
+    const user  = JSON.parse(localStorage.getItem('smartmed_user') || '{}');
 
-    // Countdown to 2:00 PM
-    function updateCountdown() {
-      const now = new Date();
-      const target = new Date();
-      target.setHours(14, 0, 0, 0);
-      const diff = target - now;
-      if (diff > 0) {
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        document.getElementById('countdown').textContent =
-          String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-      } else {
-        document.getElementById('countdown').textContent = 'Due now!';
+    if (!token) window.location = 'index.html';
+
+    // ── Fill user info ──
+    document.querySelector('.user-name').textContent = user.name || 'User';
+    document.querySelector('.user-age').textContent  =
+      `Age ${user.age || '--'} · Patient ID: ${user.patientId || 'SM-001'}`;
+    document.querySelector('.user-avatar').textContent =
+      (user.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase();
+
+    // ── Date display ──
+    const now  = new Date();
+    const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+    document.getElementById('dateDisplay').textContent =
+      now.toLocaleDateString('en-IN', opts);
+    document.getElementById('todayDate').textContent =
+      now.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+
+    // ── Greeting ──
+    const hour     = now.getHours();
+    const greeting = hour < 12 ? 'Good morning'
+                   : hour < 17 ? 'Good afternoon' : 'Good evening';
+    document.querySelector('.topbar h2').textContent =
+      `${greeting}, ${(user.name || 'there').split(' ')[0]}! 👋`;
+
+    // ── API helper ──
+    async function api(endpoint, method = 'GET', body = null) {
+      const options = {
+        method,
+        headers: {
+          'Content-Type'  : 'application/json',
+          'Authorization' : `Bearer ${token}`
+        }
+      };
+      if (body) options.body = JSON.stringify(body);
+      const res = await fetch(`http://localhost:5000${endpoint}`, options);
+      return res.json();
+    }
+
+    // ── Load dashboard data ──
+    async function loadDashboard() {
+      try {
+        // Today's schedule
+        const scheduleData = await api('/api/schedule/today');
+
+        if (scheduleData.success) {
+          const s = scheduleData;
+
+          document.getElementById('statTotal').textContent   = s.total;
+          document.getElementById('statTaken').textContent   = s.taken;
+          document.getElementById('statPending').textContent = s.pending;
+          const pct = s.total > 0
+            ? Math.round(s.taken / s.total * 100) : 0;
+          document.getElementById('statPct').textContent = pct + '%';
+
+          // Schedule list
+          const scheduleList = document.getElementById('scheduleList');
+          scheduleList.innerHTML = '';
+
+          if (s.schedule.length === 0) {
+            scheduleList.innerHTML = `
+              <div style="text-align:center;padding:24px;
+                color:#94a3b8;font-size:13px">
+                No medicines scheduled for today.
+              </div>`;
+          } else {
+            s.schedule.slice(0, 5).forEach(dose => {
+              const pillClass = dose.status === 'taken'  ? 'pill-taken'
+                              : dose.status === 'missed' ? 'pill-missed'
+                              : 'pill-pending';
+              const pillText  = dose.status === 'taken'  ? '✓ Taken'
+                              : dose.status === 'missed' ? '✗ Missed'
+                              : '⏳ Pending';
+              const [h, m]   = dose.time.split(':').map(Number);
+              const time12   = `${h > 12 ? h-12 : h || 12}:${String(m).padStart(2,'0')} ${h < 12 ? 'AM' : 'PM'}`;
+
+              scheduleList.innerHTML += `
+                <div class="schedule-row">
+                  <div>
+                    <div class="med-name">
+                      ${dose.medicineName} ${dose.dosage || ''}
+                    </div>
+                    <div class="med-time">
+                      ${user.name || 'You'} · ${time12}
+                    </div>
+                  </div>
+                  <span class="pill-badge ${pillClass}">${pillText}</span>
+                </div>`;
+            });
+          }
+
+          updateNextDose(s.schedule);
+        }
+
+        // Medicines count
+        const medsData = await api('/api/medicines');
+        if (medsData.success) {
+          // optional: show total medicines somewhere
+        }
+
+        // Device status
+        const deviceData = await api('/api/device/status');
+        if (deviceData.success) {
+          document.getElementById('boxStatus').textContent =
+            deviceData.online ? '● Online' : '● Offline';
+          document.getElementById('boxStatus').style.color =
+            deviceData.online ? '#16a34a' : '#dc2626';
+          document.getElementById('lidStatus').textContent =
+            deviceData.lidStatus === 'open' ? 'Open 🔓' : 'Closed 🔒';
+        }
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
       }
     }
-    updateCountdown();
-    setInterval(updateCountdown, 60000);
+
+    // ── Next dose countdown ──
+    function updateNextDose(schedule) {
+      const now     = new Date();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+
+      const pending = schedule
+        .filter(d => d.status === 'pending')
+        .map(d => {
+          const [h, m] = d.time.split(':').map(Number);
+          return { ...d, totalMins: h * 60 + m };
+        })
+        .filter(d => d.totalMins > nowMins)
+        .sort((a, b) => a.totalMins - b.totalMins);
+
+      if (pending.length > 0) {
+        const next     = pending[0];
+        const diffMins = next.totalMins - nowMins;
+        const h        = Math.floor(diffMins / 60);
+        const m        = diffMins % 60;
+
+        document.getElementById('countdown').textContent =
+          `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        document.getElementById('nextDoseName').textContent =
+          `${next.medicineName} ${next.dosage || ''}`;
+        document.getElementById('nextDoseDetail').textContent =
+          `${next.quantity || '1 tablet'} · ${next.foodInstruction} · ${next.time}`;
+      } else {
+        document.getElementById('nextDoseName').textContent  = 'All doses done!';
+        document.getElementById('nextDoseDetail').textContent = 'Great job today 🎉';
+        document.getElementById('countdown').textContent      = '✓';
+      }
+    }
+
+    // ── Init ──
+    loadDashboard();
+    setInterval(loadDashboard, 60000);
   </script>
 
 </body>
-</html>
+</html>  
