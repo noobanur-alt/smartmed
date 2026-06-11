@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SmartMed – My Device</title>
+  <script src="auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -13,7 +15,6 @@
       display: flex;
     }
 
-    /* ── Sidebar ── */
     .sidebar {
       width: 220px; background: #1a73e8;
       min-height: 100vh; padding: 24px 0;
@@ -57,14 +58,12 @@
       padding: 14px 24px 4px;
     }
 
-    /* ── Main ── */
     .main { margin-left: 220px; flex: 1; padding: 28px; }
 
     .topbar { margin-bottom: 24px; }
     .topbar h2 { font-size: 22px; color: #1e293b; }
     .topbar p  { font-size: 13px; color: #64748b; margin-top: 3px; }
 
-    /* ── Top grid ── */
     .top-grid {
       display: grid;
       grid-template-columns: 1.2fr 1fr;
@@ -72,7 +71,6 @@
       margin-bottom: 20px;
     }
 
-    /* ── Device card ── */
     .device-card {
       background: linear-gradient(135deg, #1a73e8, #0f52ba);
       border-radius: 16px;
@@ -81,7 +79,6 @@
       position: relative;
       overflow: hidden;
     }
-
     .device-card::before {
       content: '📦';
       position: absolute;
@@ -89,75 +86,61 @@
       font-size: 56px;
       opacity: 0.15;
     }
-
     .device-card-label {
       font-size: 11px; opacity: 0.75;
       text-transform: uppercase; letter-spacing: 0.06em;
       margin-bottom: 6px;
     }
-
     .device-card-name {
       font-size: 22px; font-weight: 700; margin-bottom: 4px;
     }
-
     .device-card-id {
       font-size: 13px; opacity: 0.75; margin-bottom: 20px;
     }
-
     .device-status-row {
       display: flex; gap: 20px; flex-wrap: wrap;
     }
-
-    .ds-item { }
     .ds-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; margin-bottom: 3px; }
     .ds-value { font-size: 14px; font-weight: 600; }
 
     .online-dot {
       display: inline-block; width: 8px; height: 8px;
-      background: #4ade80; border-radius: 50;
+      background: #4ade80; border-radius: 50%;
       margin-right: 5px; animation: pulse 2s infinite;
     }
-
     @keyframes pulse {
       0%,100% { opacity: 1; }
       50%      { opacity: 0.4; }
     }
 
-    /* ── Quick stats ── */
     .quick-stats {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-
     .qs-card {
       background: white; border: 1px solid #e2e8f0;
       border-radius: 12px; padding: 16px 18px;
     }
-
     .qs-icon  { font-size: 22px; margin-bottom: 8px; }
     .qs-val   { font-size: 22px; font-weight: 700; color: #1e293b; }
     .qs-label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
 
-    /* ── Panel ── */
     .panel {
       background: white; border: 1px solid #e2e8f0;
       border-radius: 12px; padding: 20px;
       margin-bottom: 20px;
     }
-
     .panel-title {
       font-size: 15px; font-weight: 600; color: #1e293b;
       margin-bottom: 16px;
       display: flex; justify-content: space-between; align-items: center;
     }
 
-    /* ── Controls grid ── */
     .controls-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
     }
-
     .control-btn {
       border: 1px solid #e2e8f0;
       border-radius: 12px; padding: 18px 14px;
@@ -165,29 +148,24 @@
       background: #f8fafc;
       transition: all 0.2s;
     }
-
     .control-btn:hover {
       border-color: #1a73e8;
       background: #eff6ff;
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(26,115,232,0.12);
     }
-
     .control-btn.danger:hover {
       border-color: #dc2626;
       background: #fff1f2;
     }
-
     .control-btn.success:hover {
       border-color: #16a34a;
       background: #f0fdf4;
     }
-
     .ctrl-icon  { font-size: 28px; margin-bottom: 8px; }
     .ctrl-label { font-size: 13px; font-weight: 600; color: #1e293b; }
     .ctrl-sub   { font-size: 11px; color: #94a3b8; margin-top: 3px; }
 
-    /* ── Status rows ── */
     .status-row {
       display: flex; justify-content: space-between;
       align-items: center; padding: 12px 0;
@@ -197,12 +175,10 @@
     .status-row:last-child { border-bottom: none; }
     .status-label { color: #475569; }
     .status-val   { font-weight: 500; color: #1e293b; }
-
     .dot-green  { color: #16a34a; }
     .dot-red    { color: #dc2626; }
     .dot-amber  { color: #d97706; }
 
-    /* ── Battery bar ── */
     .battery-wrap {
       display: flex; align-items: center; gap: 10px;
     }
@@ -215,7 +191,6 @@
       transition: width 0.5s;
     }
 
-    /* ── WiFi strength ── */
     .wifi-bars {
       display: flex; align-items: flex-end; gap: 2px; height: 16px;
     }
@@ -224,7 +199,6 @@
     }
     .wifi-bar.active { background: #1a73e8; }
 
-    /* ── Activity log ── */
     .log-item {
       display: flex; gap: 12px;
       padding: 10px 0;
@@ -232,7 +206,6 @@
       font-size: 13px;
     }
     .log-item:last-child { border-bottom: none; }
-
     .log-dot {
       width: 8px; height: 8px; border-radius: 50%;
       flex-shrink: 0; margin-top: 4px;
@@ -241,18 +214,15 @@
     .log-blue   { background: #1a73e8; }
     .log-amber  { background: #f59e0b; }
     .log-red    { background: #dc2626; }
-
     .log-text  { color: #475569; line-height: 1.5; flex: 1; }
     .log-time  { font-size: 11px; color: #94a3b8; flex-shrink: 0; }
 
-    /* ── Two col ── */
     .two-col {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
 
-    /* ── Toast notification ── */
     .toast {
       position: fixed; bottom: 24px; right: 24px;
       background: #1e293b; color: white;
@@ -264,7 +234,6 @@
     }
     .toast.show { transform: translateY(0); opacity: 1; }
 
-    /* ── Settings form ── */
     .setting-row {
       display: flex; justify-content: space-between;
       align-items: center; padding: 12px 0;
@@ -293,6 +262,34 @@
       outline: none; color: #1e293b;
     }
     .mini-input:focus { border-color: #1a73e8; }
+
+    /* ── Face verify modal ── */
+    .face-modal-overlay {
+      display: none; position: fixed;
+      inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 200; justify-content: center; align-items: center;
+    }
+    .face-modal-overlay.active { display: flex; }
+    .face-modal-box {
+      background: white; border-radius: 16px;
+      padding: 28px; width: 400px; text-align: center;
+    }
+    .face-modal-box h3 {
+      font-size: 18px; font-weight: 700;
+      color: #1e293b; margin-bottom: 6px;
+    }
+    .face-modal-box p {
+      font-size: 13px; color: #64748b; margin-bottom: 16px;
+    }
+    #verifyVideo {
+      width: 100%; border-radius: 10px;
+      background: #0f172a; margin-bottom: 12px;
+      display: block;
+    }
+    #verifyStatus {
+      font-size: 13px; color: #1a73e8;
+      font-weight: 500; margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
@@ -315,7 +312,10 @@
     <a class="nav-item" href="reports.html">📊 &nbsp; My Reports</a>
     <div class="nav-section">Device</div>
     <a class="nav-item active" href="device.html">📦 &nbsp; My SmartMed Box</a>
+    <a class="nav-item" href="face-enrollment.html">🤳 &nbsp; Face ID</a>
     <a class="nav-item" href="settings.html">⚙️ &nbsp; Settings</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="#" onclick="logout()">🚪 &nbsp; Logout</a>
   </div>
 
   <!-- Main -->
@@ -326,10 +326,9 @@
       <p>Monitor and control your medicine box hardware from here.</p>
     </div>
 
-    <!-- Top grid: device card + quick stats -->
+    <!-- Top grid -->
     <div class="top-grid">
 
-      <!-- Device card -->
       <div class="device-card">
         <div class="device-card-label">Your Device</div>
         <div class="device-card-name">SmartMed Box</div>
@@ -338,8 +337,7 @@
           <div class="ds-item">
             <div class="ds-label">Status</div>
             <div class="ds-value">
-              <span class="online-dot" style="border-radius:50%;display:inline-block"></span>
-              Online
+              <span class="online-dot"></span>Online
             </div>
           </div>
           <div class="ds-item">
@@ -357,7 +355,6 @@
         </div>
       </div>
 
-      <!-- Quick stats -->
       <div class="quick-stats">
         <div class="qs-card">
           <div class="qs-icon">🔓</div>
@@ -391,10 +388,11 @@
       </div>
       <div class="controls-grid">
 
-        <div class="control-btn success" onclick="sendCommand('open_lid')">
+        <!-- ✅ FIX 2: Open Lid now triggers face verification first -->
+        <div class="control-btn success" onclick="verifyFaceAndOpen()">
           <div class="ctrl-icon">🔓</div>
           <div class="ctrl-label">Open Lid</div>
-          <div class="ctrl-sub">Unlock medicine compartment</div>
+          <div class="ctrl-sub">Verify face then unlock</div>
         </div>
 
         <div class="control-btn danger" onclick="sendCommand('close_lid')">
@@ -409,13 +407,14 @@
           <div class="ctrl-sub">Send a test alarm beep</div>
         </div>
 
+        <!-- ✅ FIX 3: Sync Schedule now correctly calls sendCommand('sync') -->
         <div class="control-btn" onclick="sendCommand('sync')">
           <div class="ctrl-icon">🔄</div>
           <div class="ctrl-label">Sync Schedule</div>
           <div class="ctrl-sub">Push latest schedule to box</div>
         </div>
 
-        <div class="control-btn" onclick="sendCommand('face_enroll')">
+        <div class="control-btn" onclick="window.location='face-enrollment.html'">
           <div class="ctrl-icon">🤳</div>
           <div class="ctrl-label">Enroll Face</div>
           <div class="ctrl-sub">Register your face for auth</div>
@@ -433,7 +432,6 @@
     <!-- Two columns -->
     <div class="two-col">
 
-      <!-- Hardware status -->
       <div class="panel">
         <div class="panel-title">🔧 Hardware Status</div>
 
@@ -449,58 +447,47 @@
             </div>
           </div>
         </div>
-
         <div class="status-row">
           <div class="status-label">IP Address</div>
           <div class="status-val" style="font-family:monospace">192.168.1.108</div>
         </div>
-
         <div class="status-row">
           <div class="status-label">Battery</div>
           <div class="status-val">
             <div class="battery-wrap">
               <div class="battery-bar">
-                <div class="battery-fill"
-                  style="width:78%;background:#16a34a"></div>
+                <div class="battery-fill" style="width:78%;background:#16a34a"></div>
               </div>
               <span style="color:#16a34a">78%</span>
             </div>
           </div>
         </div>
-
         <div class="status-row">
           <div class="status-label">Lid Servo Motor</div>
           <div class="status-val dot-green">● Working</div>
         </div>
-
         <div class="status-row">
           <div class="status-label">Pill Sensor</div>
           <div class="status-val dot-green">● Active</div>
         </div>
-
         <div class="status-row">
           <div class="status-label">Buzzer</div>
           <div class="status-val dot-green">● Ready</div>
         </div>
-
         <div class="status-row">
           <div class="status-label">Camera (Face Auth)</div>
           <div class="status-val dot-green">● Ready</div>
         </div>
-
         <div class="status-row">
           <div class="status-label">LCD Display</div>
           <div class="status-val dot-green">● On</div>
         </div>
-
         <div class="status-row">
           <div class="status-label">Firmware Version</div>
           <div class="status-val">v1.0.3</div>
         </div>
-
       </div>
 
-      <!-- Activity log -->
       <div class="panel">
         <div class="panel-title">📜 Activity Log
           <button onclick="clearLog()"
@@ -540,7 +527,6 @@
           </div>
         </div>
       </div>
-
     </div>
 
     <!-- Box settings -->
@@ -593,8 +579,8 @@
             Buzzer volume
             <small>How loud the alarm beeps</small>
           </div>
-          <input class="mini-input" type="number"
-            value="3" min="1" max="5"> &nbsp;<span style="font-size:12px;color:#94a3b8">/ 5</span>
+          <input class="mini-input" type="number" value="3" min="1" max="5">
+          &nbsp;<span style="font-size:12px;color:#94a3b8">/ 5</span>
         </div>
 
         <div class="setting-row">
@@ -602,12 +588,11 @@
             Reminder repeat
             <small>Buzz every N minutes if not taken</small>
           </div>
-          <input class="mini-input" type="number"
-            value="5" min="1" max="30"> &nbsp;<span style="font-size:12px;color:#94a3b8">min</span>
+          <input class="mini-input" type="number" value="5" min="1" max="30">
+          &nbsp;<span style="font-size:12px;color:#94a3b8">min</span>
         </div>
 
       </div>
-
       <div style="margin-top:16px">
         <button onclick="saveSettings()"
           style="background:#1a73e8;color:white;border:none;
@@ -618,7 +603,7 @@
       </div>
     </div>
 
-  </div>
+  </div><!-- end .main -->
 
   <!-- Toast -->
   <div class="toast" id="toast">
@@ -626,331 +611,258 @@
     <span id="toastMsg">Command sent!</span>
   </div>
 
+  <!-- ✅ FIX 4: Face verify modal is INSIDE body, before </body> -->
+  <div class="face-modal-overlay" id="faceVerifyModal">
+    <div class="face-modal-box">
+      <h3>🔐 Face Verification</h3>
+      <p>Look at the camera to verify your identity</p>
+      <video id="verifyVideo" autoplay muted playsinline></video>
+      <div id="verifyStatus">Starting camera...</div>
+      <button onclick="closeFaceModal()"
+        style="padding:10px 24px;border:1px solid #e2e8f0;
+        border-radius:8px;background:#f8fafc;
+        font-size:14px;cursor:pointer;color:#475569">
+        Cancel
+      </button>
+    </div>
+  </div>
+
   <script>
- // ── Authentication ──
+    // ── Auth ──
     const token = localStorage.getItem('smartmed_token');
+    const user  = JSON.parse(localStorage.getItem('smartmed_user') || '{}');
+    if (!token) window.location = 'index.html';
 
-    const user =
-      JSON.parse(
-        localStorage.getItem('smartmed_user') || '{}'
-      );
-
-    // Redirect if not logged in
-    if (!token) {
-      window.location = 'index.html';
-    }
-
-    // Show logged in user
-    document.querySelector('.user-name').textContent =
-      user.name || 'User';
-
+    document.querySelector('.user-name').textContent = user.name || 'User';
     document.querySelector('.user-avatar').textContent =
-      (user.name || 'U')
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase();
+      (user.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase();
 
     // ── API helper ──
     async function api(endpoint, method = 'GET', body = null) {
-
       const options = {
         method,
-
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       };
-
-      if (body) {
-        options.body = JSON.stringify(body);
-      }
-
+      if (body) options.body = JSON.stringify(body);
       const response = await fetch(
-        `https://smartmed-backend-wute.onrender.com${endpoint}`,
-        options
+        `https://smartmed-backend-wute.onrender.com${endpoint}`, options
       );
-
       return response.json();
     }
 
-    // ── Toast helper ──
+    // ── Toast ──
     function showToast(icon, msg, duration = 3000) {
-
       document.getElementById('toastIcon').textContent = icon;
-
-      document.getElementById('toastMsg').textContent =
-        msg;
-
+      document.getElementById('toastMsg').textContent  = msg;
       const t = document.getElementById('toast');
-
       t.classList.add('show');
-
-      setTimeout(() => {
-        t.classList.remove('show');
-      }, duration);
+      setTimeout(() => t.classList.remove('show'), duration);
     }
 
-    // ── Load device status from backend ──
+    // ── Load device status ──
     async function loadStatus() {
-
       try {
-
-        const data =
-          await api('/api/device/status');
-
+        const data = await api('/api/device/status');
         if (data.success) {
-
-          // Lid status
           document.getElementById('lidStatus').textContent =
-            data.lidStatus === 'open'
-              ? '🔓 Open'
-              : '🔒 Closed';
-
-          // Sync time
-          document.getElementById('lastSync').textContent =
-            'Just now';
-
-          // Battery bar
+            data.lidStatus === 'open' ? '🔓 Open' : '🔒 Closed';
+          document.getElementById('lastSync').textContent = 'Just now';
           const bat = data.battery || 78;
-
-          document.querySelector('.battery-fill')
-            .style.width = bat + '%';
-
-          document.querySelector('.battery-fill')
-            .style.background =
-              bat > 50
-                ? '#16a34a'
-                : bat > 20
-                ? '#f59e0b'
-                : '#dc2626';
+          document.querySelector('.battery-fill').style.width = bat + '%';
+          document.querySelector('.battery-fill').style.background =
+            bat > 50 ? '#16a34a' : bat > 20 ? '#f59e0b' : '#dc2626';
         }
-
       } catch(err) {
-
-        console.error(
-          'Device status error:',
-          err
-        );
+        console.error('Device status error:', err);
       }
     }
 
-    // ── Send commands to backend → ESP32 ──
-    async function sendCommand(cmd) {
+    // ── Face verification before opening lid ──
+    async function verifyFaceAndOpen() {
+      const faceData = localStorage.getItem('smartmed_face');
 
-      const messages = {
+      if (!faceData) {
+        if (confirm('No face enrolled yet. Open lid without face verification?')) {
+          sendCommand('open_lid');
+        } else {
+          window.location = 'face-enrollment.html';
+        }
+        return;
+      }
 
-        open_lid: [
-          '🔓',
-          'Lid open command sent!'
-        ],
+      // ✅ Use .active class to show modal (matches CSS)
+      document.getElementById('faceVerifyModal').classList.add('active');
+      await startFaceVerification();
+    }
 
-        close_lid: [
-          '🔒',
-          'Lid close command sent!'
-        ],
+    async function startFaceVerification() {
+      const verifyVideo  = document.getElementById('verifyVideo');
+      const verifyStatus = document.getElementById('verifyStatus');
 
-        buzz: [
-          '🔔',
-          'Test buzzer triggered!'
-        ],
-
-        sync: [
-          '🔄',
-          'Schedule synced to box!'
-        ],
-
-        face_enroll: [
-          '🤳',
-          'Face enrollment started!'
-        ],
-
-        restart: [
-          '⚡',
-          'Restart command sent!'
-        ]
-      };
-
-      const [icon, msg] =
-        messages[cmd] || ['📡', 'Command sent!'];
+      let stream = null;
 
       try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        verifyVideo.srcObject = stream;
 
-        const endpointMap = {
+        verifyStatus.textContent = 'Loading face models...';
+        verifyStatus.style.color = '#1a73e8';
 
-          open_lid:
-            '/api/device/open-lid',
+        const MODEL_URL = './models';
 
-          close_lid:
-            '/api/device/close-lid',
-
-          buzz:
-            '/api/device/buzz',
-
-          sync:
-            '/api/device/sync',
-
-          face_enroll:
-            '/api/device/open-lid',
-
-          restart:
-            '/api/device/restart'
-        };
-
-        const data =
-          await api(
-            endpointMap[cmd],
-            'POST'
-          );
-
-        showToast(
-          icon,
-          data.message || msg
-        );
-
-        addLog(
-          icon,
-          data.message || msg
-        );
-
-        // Update UI instantly
-        if (cmd === 'open_lid') {
-
-          document.getElementById('lidStatus')
-            .textContent = '🔓 Open';
-
-        } else if (cmd === 'close_lid') {
-
-          document.getElementById('lidStatus')
-            .textContent = '🔒 Closed';
+        // ✅ Only load models if not already loaded
+        if (!faceapi.nets.tinyFaceDetector.isLoaded) {
+          await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+          ]);
         }
 
-      } catch(err) {
+        verifyStatus.textContent = 'Look at the camera...';
 
-        showToast(
-          '❌',
-          'Cannot connect to server'
-        );
+        const faceData  = JSON.parse(localStorage.getItem('smartmed_face'));
+        const savedDesc = new Float32Array(faceData.descriptor);
+        const labeled   = new faceapi.LabeledFaceDescriptors(faceData.label, [savedDesc]);
+        const matcher   = new faceapi.FaceMatcher([labeled], 0.5);
+
+        let attempts = 0;
+
+        const checkInterval = setInterval(async () => {
+          attempts++;
+
+          const detection = await faceapi
+            .detectSingleFace(verifyVideo, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+          if (detection) {
+            const match = matcher.findBestMatch(detection.descriptor);
+
+            if (match.label !== 'unknown') {
+              clearInterval(checkInterval);
+              stream.getTracks().forEach(t => t.stop());
+              document.getElementById('faceVerifyModal').classList.remove('active');
+
+              showToast('✅', `Welcome ${match.label}! Opening lid...`);
+              addLog('✅', `Face verified — ${match.label}`);
+              sendCommand('open_lid');
+
+            } else {
+              verifyStatus.textContent = 'Face not recognized. Try again...';
+              verifyStatus.style.color = '#dc2626';
+            }
+          } else {
+            verifyStatus.textContent = 'No face detected. Move closer.';
+            verifyStatus.style.color = '#d97706';
+          }
+
+          if (attempts > 20) {
+            clearInterval(checkInterval);
+            stream.getTracks().forEach(t => t.stop());
+            document.getElementById('faceVerifyModal').classList.remove('active');
+            showToast('❌', 'Face verification failed. Try again.');
+          }
+        }, 500);
+
+      } catch(err) {
+        verifyStatus.textContent = 'Camera error: ' + err.message;
+        verifyStatus.style.color = '#dc2626';
       }
     }
 
-    // ── Add activity log ──
-    function addLog(icon, text) {
+    function closeFaceModal() {
+      document.getElementById('faceVerifyModal').classList.remove('active');
+      const v = document.getElementById('verifyVideo');
+      if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+    }
 
-      const log =
-        document.getElementById('activityLog');
+    // ── Send commands ──
+    async function sendCommand(cmd) {
+      const messages = {
+        open_lid  : ['🔓', 'Lid open command sent!'],
+        close_lid : ['🔒', 'Lid close command sent!'],
+        buzz      : ['🔔', 'Test buzzer triggered!'],
+        sync      : ['🔄', 'Schedule synced to box!'],
+        face_enroll:['🤳', 'Face enrollment started!'],
+        restart   : ['⚡', 'Restart command sent!']
+      };
+      const [icon, msg] = messages[cmd] || ['📡', 'Command sent!'];
 
-      const time =
-        new Date().toLocaleTimeString(
-          'en-IN',
-          {
-            hour: '2-digit',
-            minute: '2-digit'
-          }
-        );
-
-      const colorMap = {
-
-        '🔓': 'log-green',
-        '🔒': 'log-red',
-        '🔔': 'log-amber',
-        '🔄': 'log-blue',
-        '🤳': 'log-blue',
-        '⚡': 'log-amber',
-        '💾': 'log-blue',
-        '❌': 'log-red'
+      const endpointMap = {
+        open_lid   : '/api/device/open-lid',
+        close_lid  : '/api/device/close-lid',
+        buzz       : '/api/device/buzz',
+        sync       : '/api/device/sync',
+        face_enroll: '/api/device/open-lid',
+        restart    : '/api/device/restart'
       };
 
-      const item =
-        document.createElement('div');
+      try {
+        const data = await api(endpointMap[cmd], 'POST');
+        showToast(icon, data.message || msg);
+        addLog(icon, data.message || msg);
 
+        if (cmd === 'open_lid') {
+          document.getElementById('lidStatus').textContent = '🔓 Open';
+        } else if (cmd === 'close_lid') {
+          document.getElementById('lidStatus').textContent = '🔒 Closed';
+        }
+      } catch(err) {
+        showToast('❌', 'Cannot connect to server');
+      }
+    }
+
+    // ── Activity log ──
+    function addLog(icon, text) {
+      const log  = document.getElementById('activityLog');
+      const time = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      const colorMap = {
+        '✅':'log-green','🔓':'log-green','🔒':'log-red',
+        '🔔':'log-amber','🔄':'log-blue','🤳':'log-blue',
+        '⚡':'log-amber','💾':'log-blue','❌':'log-red'
+      };
+      const item = document.createElement('div');
       item.className = 'log-item';
-
       item.innerHTML = `
         <div class="log-dot ${colorMap[icon] || 'log-blue'}"></div>
         <div class="log-text">${text}</div>
-        <div class="log-time">${time}</div>
-      `;
-
-      log.insertBefore(
-        item,
-        log.firstChild
-      );
+        <div class="log-time">${time}</div>`;
+      log.insertBefore(item, log.firstChild);
     }
 
-    // ── Clear logs ──
     function clearLog() {
-
-      document.getElementById('activityLog')
-        .innerHTML = `
-          <div style="
-            text-align:center;
-            padding:24px;
-            color:#94a3b8;
-            font-size:13px">
-
-            No activity yet.
-
-          </div>
-        `;
+      document.getElementById('activityLog').innerHTML =
+        '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">No activity yet.</div>';
     }
 
-    // ── Save settings ──
     function saveSettings() {
-
-      showToast(
-        '💾',
-        'Settings saved and sent to box!'
-      );
-
-      addLog(
-        '💾',
-        'Box settings updated'
-      );
+      showToast('💾', 'Settings saved and sent to box!');
+      addLog('💾', 'Box settings updated');
     }
 
-    // ── Live uptime counter ──
+    // ── Live uptime ──
     let uptimeSeconds = 8040;
-
     setInterval(() => {
-
       uptimeSeconds++;
-
-      const h =
-        Math.floor(uptimeSeconds / 3600);
-
-      const m =
-        Math.floor(
-          (uptimeSeconds % 3600) / 60
-        );
-
-      document.getElementById('uptime')
-        .textContent = `${h}h ${m}m`;
-
+      const h = Math.floor(uptimeSeconds / 3600);
+      const m = Math.floor((uptimeSeconds % 3600) / 60);
+      document.getElementById('uptime').textContent = `${h}h ${m}m`;
     }, 1000);
 
     // ── Last sync timer ──
     let syncSeconds = 0;
-
     setInterval(() => {
-
       syncSeconds++;
-
-      document.getElementById('lastSync')
-        .textContent =
-          syncSeconds < 60
-            ? `${syncSeconds}s ago`
-            : `${Math.floor(syncSeconds / 60)}m ago`;
-
+      document.getElementById('lastSync').textContent =
+        syncSeconds < 60 ? `${syncSeconds}s ago` : `${Math.floor(syncSeconds / 60)}m ago`;
     }, 1000);
 
-    // Initial load
     loadStatus();
-
-    // Refresh every 30 seconds
     setInterval(loadStatus, 30000);
   </script>
-
 </body>
 </html>

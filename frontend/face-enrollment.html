@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartMed – Face Enrollment</title>
+  <script src="auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8; display: flex;
+    }
+    .sidebar {
+      width: 220px; background: #1a73e8;
+      min-height: 100vh; padding: 24px 0;
+      position: fixed; top: 0; left: 0;
+    }
+    .sidebar-logo {
+      color: white; font-size: 22px; font-weight: 700;
+      padding: 0 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .sidebar-logo span {
+      font-size: 11px; display: block;
+      font-weight: 400; opacity: 0.75; margin-top: 3px;
+    }
+    .sidebar-user {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 8px;
+    }
+    .user-avatar {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.25); border-radius: 50%;
+      color: white; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 8px;
+    }
+    .user-name { color: white; font-size: 14px; font-weight: 600; }
+    .user-age  { color: rgba(255,255,255,0.65); font-size: 11px; margin-top: 2px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px; color: rgba(255,255,255,0.8);
+      font-size: 14px; cursor: pointer;
+      transition: background 0.15s; text-decoration: none;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255,255,255,0.15); color: white;
+    }
+    .nav-section {
+      font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(255,255,255,0.4);
+      padding: 14px 24px 4px;
+    }
+    .main { margin-left: 220px; flex: 1; padding: 28px; }
+    .topbar { margin-bottom: 24px; }
+    .topbar h2 { font-size: 22px; color: #1e293b; }
+    .topbar p  { font-size: 13px; color: #64748b; margin-top: 3px; }
+
+    .steps-row {
+      display: flex; gap: 8px; margin-bottom: 24px;
+      align-items: center;
+    }
+    .step-bubble {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+      border: 2px solid #e2e8f0; color: #94a3b8; background: white;
+    }
+    .step-bubble.active {
+      background: #1a73e8; border-color: #1a73e8; color: white;
+    }
+    .step-bubble.done {
+      background: #16a34a; border-color: #16a34a; color: white;
+    }
+    .step-line {
+      flex: 1; height: 2px; background: #e2e8f0; max-width: 60px;
+    }
+    .step-line.done { background: #16a34a; }
+
+    .two-col {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    .panel {
+      background: white; border-radius: 12px;
+      border: 1px solid #e2e8f0; padding: 24px;
+    }
+    .panel-title {
+      font-size: 15px; font-weight: 600; color: #1e293b;
+      margin-bottom: 16px;
+    }
+
+    .camera-wrap {
+      position: relative; width: 100%;
+      border-radius: 12px; overflow: hidden;
+      background: #0f172a;
+    }
+    video {
+      width: 100%; display: block;
+      border-radius: 12px;
+    }
+    canvas {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+    .camera-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .face-guide {
+      width: 180px; height: 220px;
+      border: 3px solid rgba(255,255,255,0.6);
+      border-radius: 50%; pointer-events: none;
+    }
+    .face-guide.detecting {
+      border-color: #f59e0b;
+      box-shadow: 0 0 20px rgba(245,158,11,0.5);
+    }
+    .face-guide.detected {
+      border-color: #16a34a;
+      box-shadow: 0 0 20px rgba(22,163,74,0.5);
+    }
+
+    .status-box {
+      margin-top: 14px; padding: 12px 16px;
+      border-radius: 8px; font-size: 13px;
+      font-weight: 500; text-align: center;
+      transition: all 0.3s;
+    }
+    .status-waiting  { background: #f1f5f9; color: #64748b; }
+    .status-scanning { background: #fef9c3; color: #ca8a04; }
+    .status-detected { background: #dcfce7; color: #16a34a; }
+    .status-error    { background: #fee2e2; color: #dc2626; }
+
+    .progress-wrap { margin-top: 14px; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: #64748b; margin-bottom: 6px;
+    }
+    .progress-bar {
+      height: 8px; background: #f1f5f9;
+      border-radius: 4px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: #1a73e8;
+      border-radius: 4px; transition: width 0.3s;
+      width: 0%;
+    }
+
+    .btn-primary {
+      background: #1a73e8; color: white; border: none;
+      padding: 12px 28px; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      width: 100%; margin-top: 14px; transition: background 0.2s;
+    }
+    .btn-primary:hover   { background: #1558b0; }
+    .btn-primary:disabled{ background: #93b4f0; cursor: not-allowed; }
+    .btn-secondary {
+      background: #f8fafc; color: #475569;
+      border: 1px solid #e2e8f0;
+      padding: 12px 28px; border-radius: 8px;
+      font-size: 14px; cursor: pointer;
+      width: 100%; margin-top: 10px;
+    }
+    .btn-success {
+      background: #16a34a; color: white; border: none;
+      padding: 12px 28px; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      width: 100%; margin-top: 14px;
+    }
+
+    .instruction-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 0; border-bottom: 1px solid #f1f5f9;
+      font-size: 13px; color: #475569;
+    }
+    .instruction-item:last-child { border-bottom: none; }
+    .instr-icon { font-size: 18px; flex-shrink: 0; }
+
+    .face-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px; background: #f8fafc;
+      border-radius: 8px; border: 1px solid #e2e8f0;
+      margin-bottom: 8px;
+    }
+    .face-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: #1a73e8; color: white;
+      font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .face-info-name { font-size: 14px; font-weight: 500; color: #1e293b; }
+    .face-info-sub  { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .face-status {
+      margin-left: auto; font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px;
+      background: #dcfce7; color: #16a34a;
+    }
+
+    .success-screen {
+      text-align: center; padding: 32px;
+    }
+    .success-icon { font-size: 56px; margin-bottom: 16px; }
+    .success-title {
+      font-size: 20px; font-weight: 700;
+      color: #1e293b; margin-bottom: 8px;
+    }
+    .success-sub { font-size: 14px; color: #64748b; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">SmartMed <span>My Medicine Manager</span></div>
+    <div class="sidebar-user">
+      <div class="user-avatar">AS</div>
+      <div class="user-name">Anurag Sharma</div>
+      <div class="user-age">Age 22 · Patient ID: SM-001</div>
+    </div>
+    <div class="nav-section">My Health</div>
+    <a class="nav-item" href="dashboard.html">🏠 &nbsp; Dashboard</a>
+    <a class="nav-item" href="medicines.html">💊 &nbsp; My Medicines</a>
+    <a class="nav-item" href="schedule.html">📅 &nbsp; My Schedule</a>
+    <a class="nav-item" href="prescription.html">📄 &nbsp; Scan Prescription</a>
+    <div class="nav-section">History</div>
+    <a class="nav-item" href="history.html">📋 &nbsp; Dose History</a>
+    <a class="nav-item" href="reports.html">📊 &nbsp; My Reports</a>
+    <div class="nav-section">Device</div>
+    <a class="nav-item active" href="face-enrollment.html">🤳 &nbsp; Face ID</a>
+    <a class="nav-item" href="device.html">📦 &nbsp; My SmartMed Box</a>
+    <a class="nav-item" href="settings.html">⚙️ &nbsp; Settings</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="#" onclick="logout()">🚪 &nbsp; Logout</a>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <h2>🤳 Face ID Setup</h2>
+      <p>Register your face once — SmartMed Box will recognize you automatically.</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps-row">
+      <div class="step-bubble done"   id="sb1">✓</div>
+      <div class="step-line done"     id="sl1"></div>
+      <div class="step-bubble active" id="sb2">2</div>
+      <div class="step-line"          id="sl2"></div>
+      <div class="step-bubble"        id="sb3">3</div>
+      <div class="step-line"          id="sl3"></div>
+      <div class="step-bubble"        id="sb4">4</div>
+      <span style="font-size:13px;color:#64748b;margin-left:8px"
+        id="stepLabel">Position your face</span>
+    </div>
+
+    <div class="two-col">
+
+      <!-- Camera panel -->
+      <div class="panel">
+        <div class="panel-title">📷 Camera Feed</div>
+
+        <div class="camera-wrap" id="cameraWrap">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="canvas"></canvas>
+          <div class="camera-overlay">
+            <div class="face-guide" id="faceGuide"></div>
+          </div>
+        </div>
+
+        <div class="status-box status-waiting" id="statusBox">
+          Click "Start Camera" to begin
+        </div>
+
+        <div class="progress-wrap" id="progressWrap" style="display:none">
+          <div class="progress-label">
+            <span>Capturing samples...</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="startBtn"
+          onclick="startCamera()">
+          📷 Start Camera
+        </button>
+
+        <button class="btn-primary" id="enrollBtn"
+          onclick="startEnrollment()"
+          style="display:none;background:#16a34a">
+          ✅ Start Face Enrollment
+        </button>
+
+        <button class="btn-secondary" id="retryBtn"
+          onclick="retryCamera()"
+          style="display:none">
+          🔄 Try Again
+        </button>
+      </div>
+
+      <!-- Instructions + enrolled faces -->
+      <div>
+        <div class="panel" style="margin-bottom:20px">
+          <div class="panel-title">📋 Instructions</div>
+          <div class="instruction-item">
+            <div class="instr-icon">💡</div>
+            <div>Make sure you are in a <strong>well-lit area</strong>. Avoid backlighting.</div>
+          </div>
+          <div class="instruction-item">
+            <div class="instr-icon">📏</div>
+            <div>Keep your face <strong>30-50 cm</strong> from the camera.</div>
+          </div>
+          <div class="instruction-item">
+            <div class="instr-icon">😐</div>
+            <div>Keep a <strong>neutral expression</strong> and look directly at camera.</div>
+          </div>
+          <div class="instruction-item">
+            <div class="instr-icon">🔄</div>
+            <div>Slowly <strong>turn left and right</strong> slightly during capture.</div>
+          </div>
+          <div class="instruction-item">
+            <div class="instr-icon">🕐</div>
+            <div>The process takes about <strong>5-10 seconds</strong>.</div>
+          </div>
+          <div class="instruction-item">
+            <div class="instr-icon">✅</div>
+            <div>You only need to enroll <strong>once</strong>. Data stays on this device.</div>
+          </div>
+        </div>
+
+        <!-- Enrolled faces -->
+        <div class="panel" id="enrolledPanel">
+          <div class="panel-title">👤 Enrolled Faces</div>
+
+          <div id="enrolledList">
+            <div style="text-align:center;padding:20px;
+              color:#94a3b8;font-size:13px">
+              No faces enrolled yet.
+            </div>
+          </div>
+
+          <div id="successScreen" style="display:none">
+            <div class="success-screen">
+              <div class="success-icon">🎉</div>
+              <div class="success-title">Face Enrolled!</div>
+              <div class="success-sub">
+                SmartMed Box will now recognize you.<br>
+                Stand in front of the box when it's medicine time.
+              </div>
+            </div>
+            <button class="btn-success"
+              onclick="window.location='device.html'">
+              Go to Device Control →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('smartmed_token');
+    const user  = JSON.parse(localStorage.getItem('smartmed_user') || '{}');
+    if (!token) window.location = 'index.html';
+
+    document.querySelector('.user-name').textContent = user.name || 'User';
+    document.querySelector('.user-avatar').textContent =
+      (user.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase();
+
+    let videoStream  = null;
+    let enrolling    = false;
+    let sampleCount  = 0;
+    let faceSamples  = [];
+    const SAMPLES_NEEDED = 10;
+
+    const video     = document.getElementById('video');
+    const canvas    = document.getElementById('canvas');
+    const faceGuide = document.getElementById('faceGuide');
+    const statusBox = document.getElementById('statusBox');
+    const startBtn  = document.getElementById('startBtn');
+    const enrollBtn = document.getElementById('enrollBtn');
+    const retryBtn  = document.getElementById('retryBtn');
+
+    // ── Load face-api models ──
+    async function loadModels() {
+      setStatus('Loading AI models...', 'scanning');
+      const MODEL_URL = './models';
+      try {
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+        setStatus('Models loaded! Face the camera.', 'detected');
+        enrollBtn.style.display = 'block';
+        startBtn.style.display  = 'none';
+        startFaceDetection();
+      } catch(err) {
+        setStatus('Failed to load models. Check internet.', 'error');
+        retryBtn.style.display = 'block';
+      }
+    }
+
+    // ── Start camera ──
+    async function startCamera() {
+      try {
+        setStatus('Starting camera...', 'scanning');
+        startBtn.disabled = true;
+
+        videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: 'user' }
+        });
+        video.srcObject = videoStream;
+
+        video.addEventListener('loadedmetadata', () => {
+          canvas.width  = video.videoWidth;
+          canvas.height = video.videoHeight;
+          loadModels();
+        });
+
+      } catch(err) {
+        setStatus('Camera access denied. Please allow camera.', 'error');
+        startBtn.disabled = false;
+        retryBtn.style.display = 'block';
+      }
+    }
+
+    // ── Continuous face detection ──
+    function startFaceDetection() {
+      setInterval(async () => {
+        if (!video.srcObject) return;
+
+        const detection = await faceapi
+          .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks();
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (detection) {
+          faceapi.draw.drawDetections(canvas, [detection]);
+          faceapi.draw.drawFaceLandmarks(canvas, [detection]);
+          faceGuide.className = 'face-guide detected';
+          if (!enrolling) {
+            setStatus('Face detected! Click "Start Enrollment"', 'detected');
+          }
+        } else {
+          faceGuide.className = 'face-guide detecting';
+          if (!enrolling) {
+            setStatus('No face detected. Move closer.', 'scanning');
+          }
+        }
+      }, 300);
+    }
+
+    // ── Start enrollment ──
+    async function startEnrollment() {
+      enrolling   = true;
+      sampleCount = 0;
+      faceSamples = [];
+      enrollBtn.style.display = 'none';
+      document.getElementById('progressWrap').style.display = 'block';
+
+      setStatus('Hold still — capturing your face...', 'scanning');
+      updateStep(3);
+
+      const captureInterval = setInterval(async () => {
+        const detection = await faceapi
+          .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+
+        if (detection) {
+          faceSamples.push(detection.descriptor);
+          sampleCount++;
+
+          const pct = Math.round(sampleCount / SAMPLES_NEEDED * 100);
+          document.getElementById('progressFill').style.width = pct + '%';
+          document.getElementById('progressPct').textContent  = pct + '%';
+          setStatus(`Capturing... ${sampleCount}/${SAMPLES_NEEDED}`, 'scanning');
+
+          if (sampleCount >= SAMPLES_NEEDED) {
+            clearInterval(captureInterval);
+            completeEnrollment();
+          }
+        } else {
+          setStatus('Face lost! Stay in frame.', 'error');
+        }
+      }, 500);
+    }
+
+    // ── Complete enrollment ──
+    async function completeEnrollment() {
+      setStatus('Processing face data...', 'scanning');
+      updateStep(4);
+
+      try {
+        const avgDescriptor = averageDescriptors(faceSamples);
+        const userName = user.name || 'Patient';
+
+        const faceData = {
+          label      : userName,
+          descriptor : Array.from(avgDescriptor),
+          enrolledAt : new Date().toISOString(),
+          userId     : user.id
+        };
+
+        // ✅ Save to localStorage
+        localStorage.setItem('smartmed_face', JSON.stringify(faceData));
+
+        // ✅ Save to backend
+        await saveFaceToBackend(faceData);
+
+        enrolling = false;
+        setStatus('✅ Face enrolled successfully!', 'detected');
+        showEnrolledFace(userName);
+
+        document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('enrolledList').style.display  = 'none';
+
+      } catch(err) {
+        setStatus('Enrollment failed. Try again.', 'error');
+        retryBtn.style.display = 'block';
+        enrolling = false;
+      }
+    }
+
+    // ── Average multiple descriptors ──
+    function averageDescriptors(descriptors) {
+      const avg = new Float32Array(128);
+      descriptors.forEach(d => {
+        for (let i = 0; i < 128; i++) avg[i] += d[i];
+      });
+      for (let i = 0; i < 128; i++) avg[i] /= descriptors.length;
+      return avg;
+    }
+
+    // ── Save face data to backend ──
+    async function saveFaceToBackend(faceData) {
+      try {
+        const BACKEND = 'https://smartmed-backend-wute.onrender.com';
+        await fetch(`${BACKEND}/api/auth/save-face`, {
+          method  : 'POST',
+          headers : {
+            'Content-Type'  : 'application/json',
+            'Authorization' : `Bearer ${token}`
+          },
+          body: JSON.stringify({ faceDescriptor: faceData.descriptor })
+        });
+        console.log('Face saved to backend!');
+      } catch(err) {
+        console.log('Backend save failed - using local storage only');
+      }
+    }
+
+    function showEnrolledFace(name) {
+      document.getElementById('enrolledList').innerHTML = `
+        <div class="face-card">
+          <div class="face-avatar">
+            ${name.split(' ').map(n => n[0]).join('').toUpperCase()}
+          </div>
+          <div>
+            <div class="face-info-name">${name}</div>
+            <div class="face-info-sub">
+              Enrolled ${new Date().toLocaleDateString('en-IN')}
+            </div>
+          </div>
+          <div class="face-status">✓ Active</div>
+        </div>`;
+    }
+
+    function setStatus(msg, type) {
+      statusBox.textContent = msg;
+      statusBox.className   = `status-box status-${type}`;
+    }
+
+    function updateStep(n) {
+      for (let i = 1; i <= 4; i++) {
+        const b = document.getElementById(`sb${i}`);
+        const l = document.getElementById(`sl${i}`);
+        if (i < n)  { b.className = 'step-bubble done';   b.textContent = '✓'; }
+        if (i === n){ b.className = 'step-bubble active';  b.textContent = i; }
+        if (i > n)  { b.className = 'step-bubble';         b.textContent = i; }
+        if (l) l.className = 'step-line' + (i < n ? ' done' : '');
+      }
+      const labels = { 2:'Position your face', 3:'Capturing samples', 4:'Saving face data' };
+      document.getElementById('stepLabel').textContent = labels[n] || '';
+    }
+
+    function retryCamera() {
+      if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+      retryBtn.style.display  = 'none';
+      startBtn.style.display  = 'block';
+      startBtn.disabled       = false;
+      enrollBtn.style.display = 'none';
+      setStatus('Click "Start Camera" to begin', 'waiting');
+      faceGuide.className     = 'face-guide';
+    }
+
+    // ── Check if already enrolled ──
+    const existing = localStorage.getItem('smartmed_face');
+    if (existing) {
+      const data = JSON.parse(existing);
+      showEnrolledFace(data.label);
+      document.getElementById('enrolledList').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
