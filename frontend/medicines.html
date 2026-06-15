@@ -133,6 +133,46 @@
       margin-bottom: 20px; display: flex;
       justify-content: space-between; align-items: center;
     }
+    .custom-time-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:9999;
+  justify-content:center;
+  align-items:center;
+}
+
+.custom-time-box{
+  background:white;
+  width:320px;
+  padding:20px;
+  border-radius:12px;
+}
+
+.custom-time-box h3{
+  margin-bottom:15px;
+}
+
+.custom-time-box input{
+  width:100%;
+  padding:12px;
+  font-size:16px;
+}
+
+.custom-time-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:15px;
+}
+
+.custom-time-actions button{
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
     .close-btn {
       background: none; border: none;
       font-size: 20px; cursor: pointer; color: #94a3b8;
@@ -277,7 +317,7 @@
           <div class="time-chip" onclick="toggleChip(this)">8:00 PM</div>
           <div class="time-chip" onclick="toggleChip(this)">9:00 PM</div>
           <div class="time-chip" onclick="toggleChip(this)">10:00 PM</div>
-          <div class="time-chip" onclick="openCustomTime()">Custom</div>
+          <div class="time-chip" onclick="openCustomTime()">+ Custom</div>
           <input type="time" id="customTimeInput" style="display:none;">
         </div>
       </div>
@@ -303,7 +343,26 @@
       </div>
     </div>
   </div>
+<!-- Custom Time Modal -->
+<div id="customTimeModal" class="custom-time-modal">
+  <div class="custom-time-box">
 
+    <h3>Add Custom Time</h3>
+
+    <input type="time" id="manualTimeInput">
+
+    <div class="custom-time-actions">
+      <button type="button" onclick="closeCustomTime()">
+        Cancel
+      </button>
+
+      <button type="button" onclick="addCustomTime()">
+        Add Time
+      </button>
+    </div>
+
+  </div>
+</div>
   <script>
     const token = localStorage.getItem('smartmed_token');
     const user  = JSON.parse(localStorage.getItem('smartmed_user') || '{}');
@@ -459,31 +518,59 @@
     function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
     function toggleChip(el) { el.classList.toggle('selected'); }
   function openCustomTime() {
-  document.getElementById("customTimeInput").showPicker();
+  document.getElementById('customTimeModal').style.display = 'flex';
 }
 
-document.getElementById("customTimeInput").addEventListener("change", function () {
+function closeCustomTime() {
+  document.getElementById('customTimeModal').style.display = 'none';
+}
 
-  const time = this.value;
-  if (!time) return;
+function addCustomTime() {
 
-  const [hour, minute] = time.split(":");
+  const value =
+    document.getElementById('manualTimeInput').value;
+
+  if (!value) {
+    alert('Select a time');
+    return;
+  }
+
+  const [hour, minute] = value.split(':');
 
   let h = parseInt(hour);
-  const ampm = h >= 12 ? "PM" : "AM";
+  const ampm = h >= 12 ? 'PM' : 'AM';
 
   h = h % 12;
   if (h === 0) h = 12;
 
-  const formattedTime = `${h}:${minute} ${ampm}`;
+  const formatted =
+    `${h}:${minute} ${ampm}`;
 
-  const customBtn = [...document.querySelectorAll(".time-chip")]
-    .find(el => el.textContent.includes("Custom"));
+  const chip = document.createElement('div');
 
-  customBtn.textContent = formattedTime;
-  customBtn.classList.add("selected");
-  customBtn.dataset.customTime = time;
-});
+  chip.className = 'time-chip selected';
+
+  chip.textContent = formatted;
+
+  chip.dataset.customTime = value;
+
+  chip.onclick = function () {
+    toggleChip(this);
+  };
+
+  const customBtn =
+    [...document.querySelectorAll('.time-chip')]
+      .find(x => x.textContent.includes('Custom'));
+
+  customBtn.parentNode.insertBefore(
+    chip,
+    customBtn
+  );
+
+  document.getElementById('manualTimeInput').value = '';
+
+  closeCustomTime();
+}
     document.getElementById('modalOverlay').addEventListener('click', function(e) {
       if (e.target === this) closeModal();
     });
