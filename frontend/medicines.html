@@ -268,7 +268,8 @@
           <div class="time-chip" onclick="toggleChip(this)">8:00 PM</div>
           <div class="time-chip" onclick="toggleChip(this)">9:00 PM</div>
           <div class="time-chip" onclick="toggleChip(this)">10:00 PM</div>
-          <div class="time-chip" onclick="toggleChip(this)">Custom</div>
+          <div class="time-chip" onclick="openCustomTime()">Custom</div>
+          <input type="time" id="customTimeInput" style="display:none;">
         </div>
       </div>
       <div class="form-group">
@@ -400,7 +401,28 @@
         '6:00 PM':'18:00','8:00 PM':'20:00','9:00 PM':'21:00','10:00 PM':'22:00'
       };
       const times = [...document.querySelectorAll('.time-chip.selected')]
-        .map(c => timeMap[c.textContent] || '08:00');
+  .map(c => {
+
+    if (timeMap[c.textContent]) {
+      return timeMap[c.textContent];
+    }
+
+    const match = c.textContent.match(/(\d+):(\d+)\s*(AM|PM)/i);
+
+    if (match) {
+      let hour = parseInt(match[1]);
+      const minute = match[2];
+      const ampm = match[3].toUpperCase();
+
+      if (ampm === "PM" && hour !== 12) hour += 12;
+      if (ampm === "AM" && hour === 12) hour = 0;
+
+      return `${String(hour).padStart(2,'0')}:${minute}`;
+    }
+
+    return null;
+  })
+  .filter(Boolean);
       try {
         const data = await api('/api/medicines', 'POST', {
           name, dosage: dose, quantity: qty, frequency: freq,
@@ -440,6 +462,38 @@
     function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
     function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
     function toggleChip(el) { el.classList.toggle('selected'); }
+    function openCustomTime() {
+  document.getElementById("customTimeInput").showPicker();
+}
+
+document.getElementById("customTimeInput").addEventListener("change", function () {
+
+  const time = this.value;
+  if (!time) return;
+
+  const [hour, minute] = time.split(":");
+
+  let h = parseInt(hour);
+  const ampm = h >= 12 ? "PM" : "AM";
+
+  h = h % 12;
+  if (h === 0) h = 12;
+
+  const formattedTime = `${h}:${minute} ${ampm}`;
+
+  const chip = document.createElement("div");
+  chip.className = "time-chip selected";
+  chip.textContent = formattedTime;
+
+  chip.onclick = function () {
+    toggleChip(this);
+  };
+
+  const customBtn = [...document.querySelectorAll(".time-chip")]
+    .find(el => el.textContent.trim() === "Custom");
+
+  customBtn.parentNode.insertBefore(chip, customBtn);
+});
 
     document.getElementById('modalOverlay').addEventListener('click', function(e) {
       if (e.target === this) closeModal();
