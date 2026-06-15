@@ -154,20 +154,29 @@
     .form-group select:focus,
     .form-group textarea:focus { border-color: #1a73e8; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .time-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 8px; margin-top: 4px;
-    }
-    .time-chip {
-      padding: 7px; text-align: center;
-      border: 1px solid #e2e8f0; border-radius: 6px;
-      font-size: 12px; cursor: pointer; color: #64748b;
-      transition: all 0.15s;
-    }
-    .time-chip.selected {
-      background: #1a73e8; border-color: #1a73e8;
-      color: white; font-weight: 500;
-    }
+    .time-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:8px;
+}
+    .time-chip{
+  text-align:center;
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #ddd;
+  border-radius:8px;
+  cursor:pointer;
+  background:#fff;
+  transition:0.2s;
+}
+    .time-chip.selected{
+  background:#2563eb;
+  color:white;
+  border-color:#2563eb;
+}
     .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
     .btn-cancel {
       flex: 1; padding: 11px; border: 1px solid #e2e8f0;
@@ -401,26 +410,13 @@
         '6:00 PM':'18:00','8:00 PM':'20:00','9:00 PM':'21:00','10:00 PM':'22:00'
       };
       const times = [...document.querySelectorAll('.time-chip.selected')]
-  .map(c => {
+  .map(chip => {
 
-    if (timeMap[c.textContent]) {
-      return timeMap[c.textContent];
+    if (chip.dataset.customTime) {
+      return chip.dataset.customTime;
     }
 
-    const match = c.textContent.match(/(\d+):(\d+)\s*(AM|PM)/i);
-
-    if (match) {
-      let hour = parseInt(match[1]);
-      const minute = match[2];
-      const ampm = match[3].toUpperCase();
-
-      if (ampm === "PM" && hour !== 12) hour += 12;
-      if (ampm === "AM" && hour === 12) hour = 0;
-
-      return `${String(hour).padStart(2,'0')}:${minute}`;
-    }
-
-    return null;
+    return timeMap[chip.textContent];
   })
   .filter(Boolean);
       try {
@@ -462,7 +458,7 @@
     function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
     function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
     function toggleChip(el) { el.classList.toggle('selected'); }
-    function openCustomTime() {
+  function openCustomTime() {
   document.getElementById("customTimeInput").showPicker();
 }
 
@@ -481,20 +477,13 @@ document.getElementById("customTimeInput").addEventListener("change", function (
 
   const formattedTime = `${h}:${minute} ${ampm}`;
 
-  const chip = document.createElement("div");
-  chip.className = "time-chip selected";
-  chip.textContent = formattedTime;
-
-  chip.onclick = function () {
-    toggleChip(this);
-  };
-
   const customBtn = [...document.querySelectorAll(".time-chip")]
-    .find(el => el.textContent.trim() === "Custom");
+    .find(el => el.textContent.includes("Custom"));
 
-  customBtn.parentNode.insertBefore(chip, customBtn);
+  customBtn.textContent = formattedTime;
+  customBtn.classList.add("selected");
+  customBtn.dataset.customTime = time;
 });
-
     document.getElementById('modalOverlay').addEventListener('click', function(e) {
       if (e.target === this) closeModal();
     });
