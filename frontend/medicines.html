@@ -7,69 +7,36 @@
   <script src="auth.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; min-height: 100vh; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; }
     
     .sidebar {
-      width: 240px; background: #1a73e8; color: white;
-      min-height: 100vh; position: fixed; top: 0; left: 0;
-      padding: 20px 0;
+      width: 220px; background: #1a73e8; min-height: 100vh; padding: 24px 0; position: fixed; top: 0; left: 0;
     }
-    .sidebar-logo {
-      font-size: 24px; font-weight: 700; padding: 0 24px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-    }
-    .sidebar-logo span { font-size: 12px; opacity: 0.8; display: block; }
-    .sidebar-user { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.2); }
-    .user-avatar {
-      width: 48px; height: 48px; background: rgba(255,255,255,0.3);
-      border-radius: 50%; display: flex; align-items: center;
-      justify-content: center; font-size: 18px; font-weight: bold; margin-bottom: 8px;
-    }
-    .nav-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 24px; color: rgba(255,255,255,0.85);
-      text-decoration: none; font-size: 14.5px;
-    }
+    .sidebar-logo { color: white; font-size: 22px; font-weight: 700; padding: 0 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.2); }
+    .sidebar-logo span { font-size: 11px; display: block; font-weight: 400; opacity: 0.75; margin-top: 3px; }
+    .sidebar-user { padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 8px; }
+    .user-avatar { width: 44px; height: 44px; background: rgba(255,255,255,0.25); border-radius: 50%; color: white; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+    .user-name { color: white; font-size: 14px; font-weight: 600; }
+    .user-age { color: rgba(255,255,255,0.65); font-size: 11px; margin-top: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: rgba(255,255,255,0.8); font-size: 14px; cursor: pointer; text-decoration: none; }
     .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
-    .nav-section { padding: 16px 24px 6px; font-size: 11px; text-transform: uppercase; opacity: 0.6; }
+    .nav-section { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.4); padding: 14px 24px 4px; }
 
-    .main { margin-left: 240px; flex: 1; padding: 30px; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .topbar h2 { font-size: 26px; color: #1e293b; }
-    .add-btn {
-      background: #1a73e8; color: white; border: none; padding: 12px 24px;
-      border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
-    }
+    .main { margin-left: 220px; flex: 1; padding: 28px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .topbar h2 { font-size: 22px; color: #1e293b; }
+    .add-btn { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
 
-    .med-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 20px;
-    }
-    .med-card {
-      background: white; border-radius: 12px; padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
-    }
-    .med-card-top { display: flex; justify-content: space-between; margin-bottom: 12px; }
-    .med-icon { font-size: 28px; }
-    .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .status-active { background: #dcfce7; color: #16a34a; }
+    .med-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .med-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
 
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-      z-index: 1000; align-items: center; justify-content: center;
-    }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
-    .modal {
-      background: white; width: 460px; border-radius: 12px;
-      padding: 28px; max-height: 90vh; overflow-y: auto;
-    }
-    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; }
-    .form-group { margin-bottom: 18px; }
+    .modal { background: white; width: 460px; border-radius: 12px; padding: 28px; }
+    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .form-group { margin-bottom: 16px; }
     .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #374151; }
-    .form-group input, .form-group select {
-      width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px;
-    }
+    .form-group input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; }
     .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
     .btn-cancel { flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: white; }
     .btn-save { flex: 1; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: 600; }
@@ -85,11 +52,11 @@
       <div class="user-name">Anurag Sharma</div>
       <div class="user-age">Age 22 · Patient ID: SM-001</div>
     </div>
+    <div class="nav-section">MY HEALTH</div>
     <a class="nav-item" href="dashboard.html">🏠 Dashboard</a>
     <a class="nav-item active" href="medicines.html">💊 My Medicines</a>
     <a class="nav-item" href="schedule.html">📅 My Schedule</a>
     <a class="nav-item" href="device.html">📦 My SmartMed Box</a>
-    <a class="nav-item" href="settings.html">⚙️ Settings</a>
   </div>
 
   <!-- Main Content -->
@@ -102,9 +69,7 @@
       <button class="add-btn" onclick="openModal()">+ Add Medicine</button>
     </div>
 
-    <div class="med-grid" id="medGrid">
-      <!-- Medicines loaded by JS -->
-    </div>
+    <div class="med-grid" id="medGrid"></div>
   </div>
 
   <!-- Add Medicine Modal -->
@@ -112,7 +77,7 @@
     <div class="modal">
       <div class="modal-title">
         Add New Medicine
-        <span onclick="closeModal()" style="cursor:pointer;font-size:24px;">&times;</span>
+        <span onclick="closeModal()" style="cursor:pointer; font-size:28px; color:#94a3b8;">×</span>
       </div>
       
       <div class="form-group">
@@ -137,15 +102,22 @@
     if (!token) window.location.href = 'index.html';
 
     async function api(endpoint, method = 'GET', body = null) {
-      const res = await fetch(`https://smartmed-backend-wute.onrender.com${endpoint}`, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: body ? JSON.stringify(body) : null
-      });
-      return res.json();
+      try {
+        const res = await fetch(`https://smartmed-backend-wute.onrender.com${endpoint}`, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: body ? JSON.stringify(body) : null
+        });
+        const data = await res.json();
+        console.log("API Response:", data);
+        return data;
+      } catch (err) {
+        console.error("API Error:", err);
+        return { success: false, message: err.message };
+      }
     }
 
     async function saveMedicine() {
@@ -153,43 +125,36 @@
       const time = document.getElementById('medTime').value;
 
       if (!name || !time) {
-        alert("Please fill both Medicine Name and Time");
+        alert("Please enter Medicine Name and Reminder Time");
         return;
       }
 
       try {
-        // Save Schedule directly for ESP32
-        const res = await api('/api/device/schedule', 'POST', {
+        const result = await api('/api/device/schedule', 'POST', {
           medicine: name,
           time: time,
           status: "pending"
         });
 
-        if (res.success) {
+        if (result.success) {
           alert("✅ Medicine added successfully!");
           closeModal();
-          // Reload medicines if you have loadMedicines function
+          document.getElementById('medName').value = '';
+          document.getElementById('medTime').value = '';
         } else {
-          alert("Failed to save: " + (res.message || "Unknown error"));
+          alert("Failed to save: " + (result.message || "Unknown error"));
         }
-      } catch (e) {
+      } catch (err) {
         alert("Cannot connect to server");
       }
     }
 
-    function openModal() {
-      document.getElementById('modalOverlay').classList.add('open');
-      document.getElementById('medName').focus();
-    }
+    function openModal() { document.getElementById('modalOverlay').classList.add('open'); }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
 
-    function closeModal() {
-      document.getElementById('modalOverlay').classList.remove('open');
-    }
-
-    // Optional: Load existing medicines
+    // Load existing medicines (optional)
     async function loadMedicines() {
       console.log("Medicines page loaded");
-      // You can expand this later
     }
 
     loadMedicines();
