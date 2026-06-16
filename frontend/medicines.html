@@ -310,16 +310,21 @@
       <div class="form-group">
         <label>Reminder Times</label>
         <div class="time-grid">
-          <div class="time-chip" onclick="toggleChip(this)">8:00 AM</div>
-          <div class="time-chip" onclick="toggleChip(this)">10:00 AM</div>
-          <div class="time-chip" onclick="toggleChip(this)">2:00 PM</div>
-          <div class="time-chip" onclick="toggleChip(this)">6:00 PM</div>
-          <div class="time-chip" onclick="toggleChip(this)">8:00 PM</div>
-          <div class="time-chip" onclick="toggleChip(this)">9:00 PM</div>
           <div class="time-chip" onclick="toggleChip(this)">10:00 PM</div>
-          <div class="time-chip" onclick="openCustomTime()">+ Custom</div>
-          <input type="time" id="customTimeInput" style="display:none;">
-        </div>
+</div>
+<div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+  <input type="time" id="customTimeInput"
+    style="padding:8px 10px;border:1px solid #e2e8f0;
+    border-radius:6px;font-size:13px;flex:1">
+  <button type="button" onclick="addCustomTime()"
+    style="padding:8px 14px;border:1px solid #1a73e8;
+    border-radius:6px;background:#eff6ff;color:#1a73e8;
+    font-size:12px;font-weight:600;cursor:pointer">
+    + Add Time
+  </button>
+</div>
+<div id="customTimesList" style="margin-top:8px;
+  display:flex;gap:6px;flex-wrap:wrap"></div>
       </div>
       <div class="form-group">
         <label>Food Instructions</label>
@@ -468,7 +473,8 @@
         '8:00 AM':'08:00','10:00 AM':'10:00','2:00 PM':'14:00',
         '6:00 PM':'18:00','8:00 PM':'20:00','9:00 PM':'21:00','10:00 PM':'22:00'
       };
-      const times = [...document.querySelectorAll('.time-chip.selected')]
+      const times = [...[...document.querySelectorAll('.time-chip.selected')]
+    .map(c => timeMap[c.textContent] || '08:00'),...customTimes];
   .map(chip => {
 
     if (chip.dataset.customTime) {
@@ -525,51 +531,33 @@ function closeCustomTime() {
   document.getElementById('customTimeModal').style.display = 'none';
 }
 
+let customTimes = [];
+
 function addCustomTime() {
-
-  const value =
-    document.getElementById('manualTimeInput').value;
-
-  if (!value) {
-    alert('Select a time');
-    return;
+  const input = document.getElementById('customTimeInput');
+  if (!input.value) return;
+  if (!customTimes.includes(input.value)) {
+    customTimes.push(input.value);
+    renderCustomTimes();
   }
+  input.value = '';
+}
 
-  const [hour, minute] = value.split(':');
+function renderCustomTimes() {
+  const list = document.getElementById('customTimesList');
+  list.innerHTML = customTimes.map(t => `
+    <span style="background:#1a73e8;color:white;
+      font-size:12px;padding:5px 10px;border-radius:14px;
+      display:inline-flex;align-items:center;gap:6px">
+      ${t}
+      <span onclick="removeCustomTime('${t}')"
+        style="cursor:pointer;font-weight:700">✕</span>
+    </span>`).join('');
+}
 
-  let h = parseInt(hour);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-
-  h = h % 12;
-  if (h === 0) h = 12;
-
-  const formatted =
-    `${h}:${minute} ${ampm}`;
-
-  const chip = document.createElement('div');
-
-  chip.className = 'time-chip selected';
-
-  chip.textContent = formatted;
-
-  chip.dataset.customTime = value;
-
-  chip.onclick = function () {
-    toggleChip(this);
-  };
-
-  const customBtn =
-    [...document.querySelectorAll('.time-chip')]
-      .find(x => x.textContent.includes('Custom'));
-
-  customBtn.parentNode.insertBefore(
-    chip,
-    customBtn
-  );
-
-  document.getElementById('manualTimeInput').value = '';
-
-  closeCustomTime();
+function removeCustomTime(t) {
+  customTimes = customTimes.filter(x => x !== t);
+  renderCustomTimes();
 }
     document.getElementById('modalOverlay').addEventListener('click', function(e) {
       if (e.target === this) closeModal();
