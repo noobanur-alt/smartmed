@@ -473,17 +473,12 @@
         '8:00 AM':'08:00','10:00 AM':'10:00','2:00 PM':'14:00',
         '6:00 PM':'18:00','8:00 PM':'20:00','9:00 PM':'21:00','10:00 PM':'22:00'
       };
-      const times = [...[...document.querySelectorAll('.time-chip.selected')]
-    .map(c => timeMap[c.textContent] || '08:00'),...customTimes];
-  .map(chip => {
-
-    if (chip.dataset.customTime) {
-      return chip.dataset.customTime;
-    }
-
-    return timeMap[chip.textContent];
-  })
-  .filter(Boolean);
+      const times = [
+  ...[...document.querySelectorAll('.time-chip.selected')]
+    .map(chip => timeMap[chip.textContent.trim()] || chip.textContent.trim())
+    .filter(Boolean),
+  ...customTimes
+];
       try {
         const data = await api('/api/medicines', 'POST', {
           name, dosage: dose, quantity: qty, frequency: freq,
