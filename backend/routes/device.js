@@ -2,7 +2,7 @@ const express    = require('express');
 const router     = express.Router();
 const protect    = require('../middleware/auth');
 const deviceAuth = require('../middleware/deviceauth');
-const Device = require('../models/device');
+const Device = require('../models/Device');
 // ── Helper: send command to ESP32 ──
 async function sendToESP32(command, data = {}) {
   const ESP32_IP = process.env.ESP32_IP;
