@@ -17,4 +17,4 @@ const deviceSchema = new mongoose.Schema({
     time: { type: Date, default: Date.now }
   }]
 }, { timestamps: true });
-module.exports = mongoose.model('Device', deviceSchema);
+module.exports = mongoose.models.Device || mongoose.model('Device', deviceSchema);

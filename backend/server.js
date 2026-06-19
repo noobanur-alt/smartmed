@@ -2,6 +2,8 @@ const express  = require('express');
 const mongoose = require('mongoose');
 const cors     = require('cors');
 const cron     = require('node-cron');
+const Schedule = require('./models/Schedule');
+const Device   = require('./models/Device');
 require('dotenv').config();
 
 const app = express();
@@ -62,36 +64,63 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected!'))
   .catch(err => console.log('MongoDB error:', err));
 
-// ────────────────────────────────────────
-// Cron job — runs every minute
-// Checks if any dose time passed and
-// marks it as missed if not taken
-// ────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+//  SINGLE CRON JOB — runs every minute
+//  Pass 1: exact-time match → triggers buzzer on ESP32
+//  Pass 2: time already passed + not logged → marks missed
+//  (Previously there were TWO separate cron.schedule blocks
+//   racing each other on the same documents — that has been
+//   merged into this one block to remove the race condition.)
+// ════════════════════════════════════════════════════════════
 cron.schedule('* * * * *', async () => {
+  const now     = new Date();
+  const nowTime = now.getHours().toString().padStart(2, '0') + ':' +
+                  now.getMinutes().toString().padStart(2, '0');
+  console.log('Cron tick — server time:', nowTime);
+
   try {
-    const Schedule = require('./models/Schedule');
-    const now      = new Date();
-
-    // Current time as HH:MM string
-    const nowTime  = now.getHours().toString().padStart(2, '0') + ':' +
-                     now.getMinutes().toString().padStart(2, '0');
-    const todayStr = now.toDateString();
-
+    const todayStr  = now.toDateString();
     const schedules = await Schedule.find({ isActive: true });
 
+    // ── Pass 1: exact-time match → trigger buzzer ──
     for (const schedule of schedules) {
       for (const time of schedule.times) {
+        if (time !== nowTime) continue;
 
-        // Only process times that have passed
-        if (time >= nowTime) continue;
-
-        // Check if already logged for today
         const alreadyLogged = schedule.doseLogs.find(log =>
           new Date(log.date).toDateString() === todayStr &&
           log.scheduledTime === time
         );
 
-        // If not logged — mark as missed
+        if (!alreadyLogged) {
+          await Device.findOneAndUpdate(
+            {},
+            {
+              pendingCommand: 'buzz',
+              $push: {
+                activityLog: {
+                  action    : `Reminder: ${schedule.medicineName} at ${time}`,
+                  timestamp : now
+                }
+              }
+            },
+            { sort: { updatedAt: -1 }, new: true }
+          );
+          console.log(`🔔 Buzzer triggered: ${schedule.medicineName} at ${time}`);
+        }
+      }
+    }
+
+    // ── Pass 2: time already passed and never logged → mark missed ──
+    for (const schedule of schedules) {
+      for (const time of schedule.times) {
+        if (time >= nowTime) continue; // only strictly-past times here
+
+        const alreadyLogged = schedule.doseLogs.find(log =>
+          new Date(log.date).toDateString() === todayStr &&
+          log.scheduledTime === time
+        );
+
         if (!alreadyLogged) {
           schedule.doseLogs.push({
             scheduledTime : time,
@@ -103,19 +132,9 @@ cron.schedule('* * * * *', async () => {
         }
       }
     }
+
   } catch (err) {
     console.error('Cron error:', err.message);
-  }
-});
-
-// ── Also sync schedule to ESP32 every hour ──
-cron.schedule('0 * * * *', async () => {
-  try {
-    console.log('Hourly ESP32 sync running...');
-    // This will auto-sync when ESP32 is connected
-    // The device route handles the actual sync logic
-  } catch (err) {
-    console.error('Hourly sync error:', err.message);
   }
 });
 
