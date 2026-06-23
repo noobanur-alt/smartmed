@@ -145,7 +145,7 @@ router.post('/sync', protect, async (req, res) => {
 });
 
 // POST /api/device/pill-taken
-router.post('/pill-taken', protect, async (req, res) => {
+router.post('/pill-taken', deviceAuth, async (req, res) => {
   try {
     const { medicineName, time } = req.body;
     const Schedule = require('../models/Schedule');
